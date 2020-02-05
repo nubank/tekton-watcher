@@ -13,7 +13,8 @@
   [runs/run-started
    runs/run-succeeded
    pulls/run-started
-   pulls/run-succeeded])
+   pulls/run-succeeded
+   pulls/run-failed])
 
 (defn -main
   [& _]
