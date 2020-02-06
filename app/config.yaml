@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: tekton-watcher-config
-data:
-  config.edn: |
-    {:tekton.dashboard/url "http://eb59abb6.ngrok.io"
-     :tekton/namespace "pipelines"}
