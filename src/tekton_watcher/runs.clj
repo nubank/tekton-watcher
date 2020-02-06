@@ -2,28 +2,39 @@
   (:require [tekton-watcher.api :refer [defpub defsub]]
             [tekton-watcher.http-client :as http-client]))
 
-(defn- contains-reason?
-  [run reason]
+(defn- get-topic
+  [run]
+  (let [reason (->> run
+                    :status
+                    :conditions
+                    (map :reason)
+                    first)]
+    (case reason
+      "Succeeded" :task-run/succeeded
+      "Failed" :task-run/failed)))
+
+(defn- contains-reasons?
+  [run reasons]
   (->> run
        :status
        :conditions
-       (some #(= reason (:reason %)))))
+       (some #(reasons (:reason %)))))
 
 (defn- list-runs
-  [{:tekton.api/keys [url]} label-selectors reason]
+  [{:tekton.api/keys [url]} label-selectors reasons]
   (->> (http-client/send-and-await #:http{:url          "{url}/taskruns"
                                           :path-params  {:url url}
                                           :query-params {:labelSelector label-selectors}})
        :items
-       (filter #(contains-reason? % reason))))
+       (filter #(contains-reasons? % reasons))))
 
 (defn get-running-tasks
   [config]
-  (list-runs config "!tekton-watcher/running-event-fired,!tekton-watcher/completed-event-fired" "Running"))
+  (list-runs config "!tekton-watcher/running-event-fired,!tekton-watcher/completed-event-fired" #{"Running"}))
 
-(defn get-succeeded-tasks
+(defn get-completed-tasks
   [config]
-  (list-runs config "tekton-watcher/running-event-fired,!tekton-watcher/completed-event-fired" "Succeeded"))
+  (list-runs config "tekton-watcher/running-event-fired,!tekton-watcher/completed-event-fired" #{"Succeeded" "Failed"}))
 
 (defn- add-label
   [run {:api.server/keys [url]} label-key]
@@ -48,8 +59,8 @@
   #{:task-run/succeeded :task-run/failed}
   [config]
   (->> config
-       get-succeeded-tasks
-       (map #(assoc {:message/topic :task-run/succeeded}
+       get-completed-tasks
+       (map #(assoc {:message/topic (get-topic %)}
                     :message/resource %))))
 
 (defsub run-started :task-run/running

@@ -52,3 +52,8 @@
   [task-run config]
   (update-commit-status task-run config #:status{:state       "success"
                                                  :description "your tests passed on Tekton!"}))
+
+(defsub run-failed :task-run/failed
+  [task-run config]
+  (update-commit-status task-run config #:status{:state       "failure"
+                                                 :description "your tests failed on Tekton"}))
