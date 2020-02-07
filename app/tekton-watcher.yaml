@@ -1,10 +1,29 @@
 apiVersion: v1
-kind: ServiceAccount
+kind: Namespace
 metadata:
   name: tekton-watcher
 ---
+###
+# The config map below can be used to customize tekton-watcher.
+# Remove the comments and apply it on the cluster.
+###
+#apiVersion: v1
+#kind: ConfigMap
+#metadata:
+#  name: tekton-watcher-config
+#  namespace: tekton-watcher
+#data:
+#  config.edn: |
+#    {:tekton/namespace "my-namespace"}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tekton-watcher
+  namespace: tekton-watcher
+---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: ClusterRole
 metadata:
   name: tekton-watcher-role
 rules:
@@ -28,21 +47,23 @@ rules:
     - patch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
+kind: ClusterRoleBinding
 metadata:
   name: tekton-watcher-role-binding
 subjects:
   - kind: ServiceAccount
     name: tekton-watcher
+    namespace: tekton-watcher
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: Role
+  kind: ClusterRole
   name: tekton-watcher-role
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: tekton-watcher
+  namespace: tekton-watcher
 spec:
   replicas: 1
   selector:
@@ -56,7 +77,7 @@ spec:
       serviceAccountName: tekton-watcher
       containers:
         - name: tekton-watcher
-          image: alangh/tekton-watcher
+          image: alangh/tekton-watcher:0.1.5
           volumeMounts:
             - name: github-statuses-updater
               mountPath: "/etc/github-statuses-updater"
