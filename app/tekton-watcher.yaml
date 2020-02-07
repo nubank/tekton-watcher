@@ -77,7 +77,7 @@ spec:
       serviceAccountName: tekton-watcher
       containers:
         - name: tekton-watcher
-          image: alangh/tekton-watcher:0.1.5
+          image: alangh/tekton-watcher:0.1.6
           volumeMounts:
             - name: github-statuses-updater
               mountPath: "/etc/github-statuses-updater"
