@@ -3,14 +3,18 @@ kind: Namespace
 metadata:
   name: tekton-watcher
 ---
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: tekton-watcher-config
-  namespace: tekton-watcher
-data:
-  config.edn: |
-    {:tekton/namespace "pipelines"}
+###
+# The config map below can be used to customize tekton-watcher.
+# Remove the comments and apply it on the cluster.
+###
+#apiVersion: v1
+#kind: ConfigMap
+#metadata:
+#  name: tekton-watcher-config
+#  namespace: tekton-watcher
+#data:
+#  config.edn: |
+#    {:tekton/namespace "my-namespace"}
 ---
 apiVersion: v1
 kind: ServiceAccount
