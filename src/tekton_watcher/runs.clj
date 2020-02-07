@@ -70,3 +70,7 @@
 (defsub run-succeeded :task-run/succeeded
   [task-run config]
   (add-label task-run config "completed-event-fired"))
+
+(defsub run-failed :task-run/failed
+  [task-run config]
+  (add-label task-run config "completed-event-fired"))

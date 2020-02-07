@@ -12,6 +12,7 @@
 (def subscribers
   [runs/run-started
    runs/run-succeeded
+   runs/run-failed
    pulls/run-started
    pulls/run-succeeded
    pulls/run-failed])
