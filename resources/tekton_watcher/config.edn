@@ -4,6 +4,6 @@
  :tekton.api/url
  "{api.server/url}{tekton.api/path}/namespaces/{tekton/namespace}"
  :tekton/namespace "default"
- :tekton.dashboard/url "http://eb59abb6.ngrok.io"
+ :tekton.dashboard/url "http://localhost:8081"
  :tekton.dashboard/task-run
  "{tekton.dashboard/url}/#/namespaces/{tekton/namespace}/taskruns/{task-run}"}
