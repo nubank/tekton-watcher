@@ -1,95 +1,116 @@
 (ns tekton-watcher.api
   (:require [clojure.core.async :as async :refer [<! >! go-loop]]
-            [clojure.tools.logging :as log]))
+            [clojure.core.async.impl.protocols :as async.impl]
+            [clojure.tools.logging :as log]
+            [tekton-watcher.misc :as misc])
+  (:import clojure.lang.Keyword))
 
-(def ^:private digits-and-letters
-  (keep (comp #(when (Character/isLetterOrDigit %)
-                 %) char) (range 48 123)))
-
-(defn correlation-id
-  "Returns a random string composed of numbers ([0-9]) and
-  letters ([a-zA-Z]) to be used as a correlation id."
-  []
-  (apply str (repeatedly 7 #(rand-nth digits-and-letters))))
-
-(defn qualified-name
+(defn- ^Keyword qualified-name
   [ns name]
   (keyword (str ns "/" name)))
 
+(defn stop-fn
+  "Returns a no args function that closes the supplied channel when called."
+  [event name channel]
+  (fn []
+    (log/info :event event :name name)
+    (async/close! channel)))
+
 (defn- get-messages
+  "Attempts to get messages produced by the publisher.
+
+  Returns a (possibly empty) sequence of published messages. Catches
+  any errors thrown by the underwing handler."
   [{:keys [config handler publisher-name]}]
   (try
     (let [messages (handler config)]
-      (if (seq messages)
-        messages
-        (log/info :out-message :publisher publisher-name :no-resources-found)))
+      (when-not (seq messages)
+        (log/info :out-message :publisher publisher-name :no-resources-found))
+      messages)
     (catch Throwable t
       (log/error t :out-message-error :publisher publisher-name))))
 
-(defn- publisher*
-  [{:keys [channel config handler publisher-name]}]
+(defn- start-publisher*
+  [{:keys [channel publisher-name] :as options}]
   (go-loop []
-    (let [messages (handler config)]
+    (let [messages (get-messages options)]
       (doseq [message messages]
-        (let [cid                              (correlation-id)
+        (let [cid                              (misc/correlation-id)
               {:message/keys [topic resource]} message]
           (log/info :out-message :publisher publisher-name :cid cid :topic topic :resource-name (get-in resource [:metadata :name]))
           (>! channel (assoc message :message/cid cid))))
-      (<! (async/timeout 500))
-      (recur))))
+      (when-not (async.impl/closed? channel)
+        (<! (async/timeout 500))
+        (recur)))))
+
+(defn- start-publisher
+  [{:keys [channel publisher-name topics] :as options}]
+  (log/info :event :starting-publisher :name publisher-name :topics topics)
+  (start-publisher* options)
+  (async/pub channel :message/topic))
 
 (defn publisher
-  [{:keys [publisher-name topics] :as options}]
+  [pub-name topics handler-fn]
   (let [channel (async/chan)]
-    (log/info :starting-publisher :publisher publisher-name :topics topics)
-    (publisher* (assoc options :channel channel))
-    (async/pub channel :message/topic)))
+    #:publisher{:topics topics
+                :start  (fn [config]
+                          (start-publisher {:channel        channel
+                                            :config         config
+                                            :handler        handler-fn
+                                            :publisher-name pub-name
+                                            :topics         topics}))
+                :stop   (stop-fn :stopping-publisher pub-name channel)}))
 
 (defmacro defpub
   [name topics args & body]
-  (let [pub-name (qualified-name *ns* (clojure.core/name name))]
-    `(def ~name
-       #:publisher{:topics ~topics
-                   :start  (fn [config#]
-                             (publisher {:config         config#
-                                         :handler        (fn ~args
-                                                           ~@body)
-                                         :publisher-name ~pub-name
-                                         :topics         ~topics}))})))
+  `(def ~name
+     (publisher ~(qualified-name *ns* (clojure.core/name name))
+                ~topics
+                (fn ~args
+                  ~@body))))
 
-(defn- subscriber*
+(defn- start-subscriber*
   [{:keys [config channel handler subscriber-name]}]
   (go-loop []
-    (let [{:message/keys [cid topic resource]
-           :or           {cid "default"}
-           :as           message} (<! channel)
-          resource-name           (get-in resource [:metadata :name])]
-      (try
-        (log/info :in-message :subscriber subscriber-name :cid cid :topic topic :resource-name resource-name)
-        (handler resource config)
-        (catch Throwable t
-          (log/error t :in-message-error :subscriber subscriber-name :cid cid :topic topic :resource-name resource-name)))
+    (when-let [{:message/keys [cid topic resource]
+                :or           {cid "default"}
+                :as           message} (<! channel)]
+      (let [resource-name (get-in resource [:metadata :name])]
+        (try
+          (log/info :in-message :subscriber subscriber-name :cid cid :topic topic :resource-name resource-name)
+          (handler resource config)
+          (catch Throwable t
+            (log/error t :in-message-error :subscriber subscriber-name :cid cid :topic topic :resource-name resource-name)))))
+    (if (async.impl/closed? channel)
+      (log/info :event :subscriber-stopped :name subscriber-name)
       (recur))))
 
+(defn- start-subscriber
+  [{:keys [channel publisher subscriber-name topic] :as options}]
+  (log/info :event :starting-subscriber :name subscriber-name :topic topic)
+  (start-subscriber* options)
+  (async/sub publisher topic channel))
+
 (defn subscriber
-  [{:keys [publisher subscriber-name topic] :as options}]
+  [sub-name topic handler-fn]
   (let [channel (async/chan)]
-    (log/info :starting-subscriber :subscriber subscriber-name :topic topic)
-    (subscriber* (assoc options :channel channel))
-    (async/sub publisher topic channel)))
+    #:subscriber    {:topic topic
+                     :start (fn        [publisher config]
+                              (start-subscriber {:channel         channel
+                                                 :config          config
+                                                 :handler         handler-fn
+                                                 :publisher       publisher
+                                                 :subscriber-name sub-name
+                                                 :topic           topic}))
+                     :stop  (stop-fn :stopping-subscriber sub-name channel)}))
 
 (defmacro defsub
   [name topic args & body]
-  (let [sub-name (qualified-name *ns* (clojure.core/name name))]
-    `(def ~name
-       #:subscriber{:topic ~topic
-                    :start (fn        [publisher# config#]
-                             (subscriber {:config          config#
-                                          :handler         (fn ~args
-                                                             ~@body)
-                                          :publisher       publisher#
-                                          :subscriber-name ~sub-name
-                                          :topic           ~topic}))})))
+  `(def ~name
+     (subscriber ~(qualified-name *ns* (clojure.core/name name))
+                 ~topic
+                 (fn ~args
+                   ~@body))))
 
 (defn start-messaging
   [publishers subscribers config]
@@ -99,3 +120,10 @@
     (doseq [{:publisher/keys [topics start]} publishers]
       (let [publisher (start config)]
         (start-subscribers topics publisher)))))
+
+(defn stop-messaging
+  [publishers subscribers]
+  (letfn [(stop-all [key workers]
+            (run! #(apply (get % key) []) workers))]
+    (stop-all :publisher/stop publishers)
+    (stop-all :subscriber/stop subscribers)))
