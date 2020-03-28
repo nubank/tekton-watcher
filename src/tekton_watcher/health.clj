@@ -19,7 +19,7 @@
         (log/error throwable :health-check :api-server-couldnt-be-reached)
         {:component :http-client
          :status    :failed
-         :message   (str "API server couldn't be reached. Cause:" (.getMessage throwable))})
+         :message   (str "API server couldn't be reached. Cause: " (.getMessage throwable))})
       {:component :http-client
        :status    :ok
        :message   "API server is accessible"})))
@@ -34,11 +34,11 @@
   heartbeat messages, it will be considered unhealthy."
   1)
 
-(defn- threshold-exceeded?
+(defn threshold-exceeded?
   "Returns true if the timestamp of the last heartbeat sent exceeds the threshold."
   [^Long threshold-interval-in-mins-of-missing-heartbeats ^Long now ^Long timestamp-of-last-heartbeat-in-nsecs]
   (let [delta (- now timestamp-of-last-heartbeat-in-nsecs)]
-    (> (* 60 1.0E9)
+    (> (* 60 1E9)
        threshold-interval-in-mins-of-missing-heartbeats)))
 
 (defn check-heartbeats
@@ -50,7 +50,7 @@
                   (if (threshold-exceeded? threshold-interval-in-mins-of-missing-heartbeats timestamp-in-nsecs timestamp)
                     {:component component
                      :status    :down
-                     :message   (format "Component hasn't sent heartbeat messages for more than %s minute(s)" threshold-interval-in-mins-of-missing-heartbeats)}
+                     :message   (format "Component hasn't sent heartbeat messages for more than %d minute(s)" threshold-interval-in-mins-of-missing-heartbeats)}
                     {:component component
                      :status    :ok
                      :message   "Alive"})))))
@@ -88,23 +88,3 @@
        :body   {:status  :unhealthy
                 :message "Some components are unhealthy"
                 :checks  checks}})))
-
-(def not-found
-  "Not found response."
-  {:status 404
-   :body   {:message "Not found"}})
-
-(def app
-  (middleware.json/wrap-json-response
-   (routes
-    (GET "/health/live" [] (liveness-check {:api.server/url "http://localhost:8080"}))
-    (route/not-found not-found))))
-
-(defn start
-  []
-  (server/run-server #'app {:port               9000
-                            :worker-name-prefix "tekton-watcher-worker-"
-                            :error-logger       (fn [message exception]
-                                                  (log/error exception :msg message))
-                            :warn-logger        (fn [message exception]
-                                                  (log/warn exception :msg message))}))
