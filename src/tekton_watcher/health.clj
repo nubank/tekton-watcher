@@ -1,12 +1,9 @@
 (ns tekton-watcher.health
   "Health check API for tekton-watcher."
-  (:require [clojure.tools.logging :as log]
-            [tekton-watcher.http-client :as http-client]
-            [compojure.core :refer [GET routes]]
-            [compojure.route :as route]
-            [org.httpkit.server :as server]
-            [ring.middleware.json :as middleware.json]
-            [clojure.core.async :as async])
+  (:require [clojure.core.async :as async :refer [<! go-loop]]
+            [clojure.core.async.impl.protocols :as async.impl]
+            [clojure.tools.logging :as log]
+            [tekton-watcher.http-client :as http-client])
   (:import clojure.lang.Keyword))
 
 (defn check-api-server-connection
@@ -24,7 +21,7 @@
        :status    :ok
        :message   "API server is accessible"})))
 
-(def hearthbeats
+(def heartbeats
   "Stores heartbeat messages sent through async channels."
   (atom {}))
 
@@ -36,33 +33,47 @@
 
 (defn threshold-exceeded?
   "Returns true if the timestamp of the last heartbeat sent exceeds the threshold."
-  [^Long threshold-interval-in-mins-of-missing-heartbeats ^Long now ^Long timestamp-of-last-heartbeat-in-nsecs]
-  (let [delta (- now timestamp-of-last-heartbeat-in-nsecs)]
-    (> (* 60 1E9)
-       threshold-interval-in-mins-of-missing-heartbeats)))
+  [^Long threshold-interval-in-mins-of-missing-heartbeats ^Long now-in-ns ^Long timestamp-of-last-heartbeat-in-ns]
+  (let [delta (- now-in-ns timestamp-of-last-heartbeat-in-ns)]
+    (> delta
+       (* threshold-interval-in-mins-of-missing-heartbeats 60 1E9))))
 
 (defn check-heartbeats
   "Checks the heartbeat messages to determine if all components are healthy."
-  [hearthbeats ^Long timestamp-in-nsecs]
+  [hearthbeats ^Long now]
   (->> hearthbeats
-           vals
-           (map (fn [{:keys [component timestamp]}]
-                  (if (threshold-exceeded? threshold-interval-in-mins-of-missing-heartbeats timestamp-in-nsecs timestamp)
-                    {:component component
-                     :status    :down
-                     :message   (format "Component hasn't sent heartbeat messages for more than %d minute(s)" threshold-interval-in-mins-of-missing-heartbeats)}
-                    {:component component
-                     :status    :ok
-                     :message   "Alive"})))))
+       vals
+       (map (fn [{:keys [component timestamp]}]
+              (if (threshold-exceeded? threshold-interval-in-mins-of-missing-heartbeats now timestamp)
+                {:component component
+                 :status    :down
+                 :message   (format "Component hasn't sent heartbeat messages for more than %d minute(s)" threshold-interval-in-mins-of-missing-heartbeats)}
+                {:component component
+                 :status    :ok
+                 :message   "Alive"})))))
+
+(defn ^Long timestamp
+  "Timestamp in nanoseconds representing the current instant."
+  []
+  (System/nanoTime))
 
 (defn alive
   "Sends a heartbeat message through the supplied channel indicating
   that the component in question is healthy."
   [channel ^Keyword component]
   (async/put! channel {:component component
-                       :status    :ok
-                       :message   "Alive"
-                       :timestamp (System/nanoTime)}))
+                       :timestamp (timestamp)}))
+
+(defn start-to-observe-heartbeats
+  "Starts a go block that observes incoming heartbeat messages sent
+  through the supplied channel and stores them in the heartbeats
+  atom."
+  [liveness-channel]
+  (go-loop []
+    (when-let [{:keys [component] :as heartbeat} (<! liveness-channel)]
+      (swap! heartbeats assoc component heartbeat))
+    (when-not (async.impl/closed? liveness-channel)
+      (recur))))
 
 (defn- healthy?
   "True when all checks contain the status :ok."
@@ -79,7 +90,7 @@
   considered healthy and 503 otherwise."
   [config]
   (let [checks (into [(check-api-server-connection config)]
-                     (check-heartbeats @hearthbeats (System/nanoTime)))]
+                     (check-heartbeats @heartbeats (System/nanoTime)))]
     (if (healthy? checks)
       {:status 200
        :body   {:status :healthy
