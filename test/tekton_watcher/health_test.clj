@@ -100,4 +100,22 @@
 
     (async/close! channel)))
 
-(deftest liveness-check-test)
+(deftest liveness-check-test
+  (let [config {:api.server/url "url"}]
+    (providing [(health/check-api-server-connection config)
+                {:component :http-client :status :ok}]
+               (testing "responds with 200 status code indicating that the system is healthy"
+                 (is (match? {:status 200
+                              :body   {:checks [{:component :http-client
+                                                 :status    :ok}]}}
+                             (health/liveness-check config))))
+
+               (testing "responds with 503 status code indicating that the system is unhealthy"
+                 (providing [(health/check-heartbeats map? number?)
+                             [{:component :publisher-a :status :down}]]
+                            (is (match? {:status 503
+                                         :body   {:checks (m/in-any-order [{:component :http-client
+                                                                            :status    :ok}
+                                                                           {:component :publisher-a
+                                                                            :status    :down}])}}
+                                        (health/liveness-check config))))))))
