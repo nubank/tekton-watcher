@@ -59,83 +59,87 @@
                              :stop  fn?}
                 (api/subscriber :sub1 :task-run/running identity)))))
 
-(def channels {})
-
-(def config {})
-
 (deftest messaging-test
-  (testing "wires up publishers and subscribers"
-    (let [publishers  [(api/publisher :pub1 #{:task-run/running} watch-running-tasks*)]
-          subscribers [(api/subscriber :sub1 :task-run/running task-run-running*)]]
-      (api/start-messaging publishers subscribers channels config)
-      (sleep-for 2)
-      (api/stop-messaging publishers subscribers)
+  (let [channels {:channel/liveness (async/chan)}
+        config   {}]
 
-      (is (= [:task-run/running]
-             (keys @resources))
-          "only the expected events have been published and subscribed")
+    (testing "wires up publishers and subscribers"
+      (let [publishers  [(api/publisher :pub1 #{:task-run/running} watch-running-tasks*)]
+            subscribers [(api/subscriber :sub1 :task-run/running task-run-running*)]]
+        (api/start-messaging publishers subscribers channels config)
+        (sleep-for 2)
+        (api/stop-messaging publishers subscribers)
 
-      (is (match? {:task-run/running
-                   (m/prefix [{:metadata
-                               {:name #"^task-run-.*"}}])}
-                  @resources)
-          "the correct data structure has been consumed by the subscriber")
+        (is (match? {:component :pub1
+                     :timestamp number?}
+                    (<!! (:channel/liveness channels)))
+            "publishers always report liveness")
 
-      (is (> (count (:task-run/running @resources))
-             2)
-          "more than one message has been produced within the interval"))
+        (is (= [:task-run/running]
+               (keys @resources))
+            "only the expected events have been published and subscribed")
 
-    (reset-resources!))
+        (is (match? {:task-run/running
+                     (m/prefix [{:metadata
+                                 {:name #"^task-run-.*"}}])}
+                    @resources)
+            "the correct data structure has been consumed by the subscriber")
 
-  (testing "publishers only dispatch messages to the correct subscribers"
-    (let [publishers  [(api/publisher :pub1 #{:task-run/running} watch-running-tasks*)]
-          subscribers [(api/subscriber :sub1 :task-run/succeeded task-run-succeeded*)]]
-      (api/start-messaging publishers subscribers channels config)
-      (sleep-for 1)
-      (api/stop-messaging publishers subscribers)
+        (is (> (count (:task-run/running @resources))
+               2)
+            "more than one message has been produced within the interval"))
 
-      (is (= {}
-             @resources)
-          "no messages have been consumed because the subscriber was expecting a
+      (reset-resources!))
+
+    (testing "publishers only dispatch messages to the correct subscribers"
+      (let [publishers  [(api/publisher :pub1 #{:task-run/running} watch-running-tasks*)]
+            subscribers [(api/subscriber :sub1 :task-run/succeeded task-run-succeeded*)]]
+        (api/start-messaging publishers subscribers channels config)
+        (sleep-for 1)
+        (api/stop-messaging publishers subscribers)
+
+        (is (= {}
+               @resources)
+            "no messages have been consumed because the subscriber was expecting a
       `:task-run/succeeded` event"))
 
-    (reset-resources!))
+      (reset-resources!))
 
-  (testing "multiple publishers and subscribers running together"
-    (let [publishers  [(api/publisher :pub1 #{:task-run/running} watch-running-tasks*)
-                       (api/publisher :pub2 #{:task-run/succeeded} watch-succeeded-tasks*)]
-          subscribers [(api/subscriber :sub1 :task-run/running task-run-running*)
-                       (api/subscriber :sub2 :task-run/succeeded task-run-succeeded*)]]
-      (api/start-messaging publishers subscribers channels config)
-      (sleep-for 2)
-      (api/stop-messaging publishers subscribers)
+    (testing "multiple publishers and subscribers running together"
+      (let [publishers  [(api/publisher :pub1 #{:task-run/running} watch-running-tasks*)
+                         (api/publisher :pub2 #{:task-run/succeeded} watch-succeeded-tasks*)]
+            subscribers [(api/subscriber :sub1 :task-run/running task-run-running*)
+                         (api/subscriber :sub2 :task-run/succeeded task-run-succeeded*)]]
+        (api/start-messaging publishers subscribers channels config)
+        (sleep-for 2)
+        (api/stop-messaging publishers subscribers)
 
-      (is (= [:task-run/running :task-run/succeeded]
-             (keys @resources))
-          "only the expected events have been published and subscribed")
+        (is (= [:task-run/running :task-run/succeeded]
+               (keys @resources))
+            "only the expected events have been published and subscribed")
 
-      (is (match? {:task-run/running
-                   (m/prefix [{:metadata
-                               {:name   #"^task-run-.*"
-                                :labels {"a" "b"}}}])
-                   :task-run/succeeded
-                   (m/prefix [{:metadata
-                               {:name   #"^task-run-.*"
-                                :labels {"c" "d"}}}])}
-                  @resources)
-          "both subscribers have received their messages")
+        (is (match? {:task-run/running
+                     (m/prefix [{:metadata
+                                 {:name   #"^task-run-.*"
+                                  :labels {"a" "b"}}}])
+                     :task-run/succeeded
+                     (m/prefix [{:metadata
+                                 {:name   #"^task-run-.*"
+                                  :labels {"c" "d"}}}])}
+                    @resources)
+            "both subscribers have received their messages")
 
-      (is (> (count (:task-run/running @resources))
-             2)
-          "more than one message has been produced to the `:task-run/running`
+        (is (> (count (:task-run/running @resources))
+               2)
+            "more than one message has been produced to the `:task-run/running`
           topic within the interval")
 
-      (is (> (count (:task-run/succeeded @resources))
-             2)
-          "more than one message has been produced to the `:task-run/succeeded`
+        (is (> (count (:task-run/succeeded @resources))
+               2)
+            "more than one message has been produced to the `:task-run/succeeded`
           topic within the interval"))
 
-    (reset-resources!)))
+      (reset-resources!))))
 
 ;; Macros
 
@@ -150,15 +154,18 @@
   (task-run-running* task-run config))
 
 (deftest macros-test
-  (testing "wires up publishers and subscribers"
-    (let [publishers  [watch-running-tasks]
-          subscribers [task-run-running]]
-      (api/start-messaging publishers subscribers channels config)
-      (sleep-for 1)
-      (api/stop-messaging publishers subscribers)
+  (let [channels {:channel/liveness (async/chan)}
+        config   {}]
 
-      (is (match? {:task-run/running
-                   (m/prefix [{:metadata
-                               {:name #"^task-run-.*"}}])}
-                  @resources)
-          "the correct data structure has been consumed by the subscriber"))))
+    (testing "wires up publishers and subscribers"
+      (let [publishers  [watch-running-tasks]
+            subscribers [task-run-running]]
+        (api/start-messaging publishers subscribers channels config)
+        (sleep-for 1)
+        (api/stop-messaging publishers subscribers)
+
+        (is (match? {:task-run/running
+                     (m/prefix [{:metadata
+                                 {:name #"^task-run-.*"}}])}
+                    @resources)
+            "the correct data structure has been consumed by the subscriber")))))
