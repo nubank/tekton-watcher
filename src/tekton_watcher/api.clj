@@ -1,11 +1,13 @@
 (ns tekton-watcher.api
   (:require [clojure.core.async :as async :refer [<! >! go-loop]]
             [clojure.core.async.impl.protocols :as async.impl]
+            [clojure.spec.alpha :as s]
             [clojure.tools.logging :as log]
             [tekton-watcher.misc :as misc])
   (:import clojure.lang.Keyword))
 
 (defn- ^Keyword qualified-name
+  "Returns a keyword consisting of ns/name."
   [ns name]
   (keyword (str ns "/" name)))
 
@@ -31,99 +33,208 @@
       (log/error t :out-message-error :publisher publisher-name))))
 
 (defn- start-publisher*
-  [{:keys [channel publisher-name] :as options}]
+  [{:channel/keys [out]} {:keys [publisher-name] :as options}]
   (go-loop []
     (let [messages (get-messages options)]
       (doseq [message messages]
         (let [cid                              (misc/correlation-id)
               {:message/keys [topic resource]} message]
           (log/info :out-message :publisher publisher-name :cid cid :topic topic :resource-name (get-in resource [:metadata :name]))
-          (>! channel (assoc message :message/cid cid))))
-      (when-not (async.impl/closed? channel)
+          (>! out (assoc message :message/cid cid))))
+      (when-not (async.impl/closed? out)
         (<! (async/timeout 500))
         (recur)))))
 
 (defn- start-publisher
-  [{:keys [channel publisher-name topics] :as options}]
+  [{:channel/keys [out] :as channels} {:keys [publisher-name topics] :as options}]
   (log/info :event :starting-publisher :name publisher-name :topics topics)
-  (start-publisher* options)
-  (async/pub channel :message/topic))
+  (start-publisher* channels options)
+  (async/pub out :message/topic))
 
 (defn publisher
   [pub-name topics handler-fn]
-  (let [channel (async/chan)]
+  (let [out-channel (async/chan)]
     #:publisher{:topics topics
-                :start  (fn [config]
-                          (start-publisher {:channel        channel
-                                            :config         config
+                :start  (fn [channels config]
+                          (start-publisher (assoc channels :channel/out out-channel)
+                                           {:config         config
                                             :handler        handler-fn
                                             :publisher-name pub-name
                                             :topics         topics}))
-                :stop   (stop-fn :stopping-publisher pub-name channel)}))
-
-(defmacro defpub
-  [name topics args & body]
-  `(def ~name
-     (publisher ~(qualified-name *ns* (clojure.core/name name))
-                ~topics
-                (fn ~args
-                  ~@body))))
+                :stop   (stop-fn :stopping-publisher pub-name out-channel)}))
 
 (defn- start-subscriber*
-  [{:keys [config channel handler subscriber-name]}]
+  [{:channel/keys [in]} {:keys [config handler subscriber-name]}]
   (go-loop []
     (when-let [{:message/keys [cid topic resource]
                 :or           {cid "default"}
-                :as           message} (<! channel)]
+                :as           message} (<! in)]
       (let [resource-name (get-in resource [:metadata :name])]
         (try
           (log/info :in-message :subscriber subscriber-name :cid cid :topic topic :resource-name resource-name)
           (handler resource config)
           (catch Throwable t
             (log/error t :in-message-error :subscriber subscriber-name :cid cid :topic topic :resource-name resource-name)))))
-    (if (async.impl/closed? channel)
+    (if (async.impl/closed? in)
       (log/info :event :subscriber-stopped :name subscriber-name)
       (recur))))
 
 (defn- start-subscriber
-  [{:keys [channel publisher subscriber-name topic] :as options}]
+  [{:channel/keys [in] :as channels} {:keys [publisher subscriber-name topic] :as options}]
   (log/info :event :starting-subscriber :name subscriber-name :topic topic)
-  (start-subscriber* options)
-  (async/sub publisher topic channel))
+  (start-subscriber* channels options)
+  (async/sub publisher topic in))
 
 (defn subscriber
   [sub-name topic handler-fn]
-  (let [channel (async/chan)]
+  (let [in-channel (async/chan)]
     #:subscriber    {:topic topic
-                     :start (fn        [publisher config]
-                              (start-subscriber {:channel         channel
-                                                 :config          config
+                     :start (fn        [publisher channels config]
+                              (start-subscriber (assoc channels :channel/in in-channel)
+                                                {:config          config
                                                  :handler         handler-fn
                                                  :publisher       publisher
                                                  :subscriber-name sub-name
                                                  :topic           topic}))
-                     :stop  (stop-fn :stopping-subscriber sub-name channel)}))
-
-(defmacro defsub
-  [name topic args & body]
-  `(def ~name
-     (subscriber ~(qualified-name *ns* (clojure.core/name name))
-                 ~topic
-                 (fn ~args
-                   ~@body))))
+                     :stop  (stop-fn :stopping-subscriber sub-name in-channel)}))
 
 (defn start-messaging
-  [publishers subscribers config]
-  (letfn [(start-subscribers [topics publisher]
-            (run! #(apply (:subscriber/start %) [publisher config])
+  "Wires up publishers and subscribers, starting up the messaging
+  system."
+  [publishers subscribers channels config]
+  (letfn [(start-subscribers [publisher topics]
+            (run! (fn [{:subscriber/keys [start]}]
+                    (start publisher channels config))
                   (filter #(topics (:subscriber/topic %)) subscribers)))]
     (doseq [{:publisher/keys [topics start]} publishers]
-      (let [publisher (start config)]
-        (start-subscribers topics publisher)))))
+      (let [publisher (start channels config)]
+        (start-subscribers publisher topics)))))
 
 (defn stop-messaging
+  "Stops all publishers and subscribers, terminating the messaging
+  system."
   [publishers subscribers]
-  (letfn [(stop-all [key workers]
-            (run! #(apply (get % key) []) workers))]
+  (letfn [(stop-all [stop-fn-key workers]
+            (run! #(apply (get % stop-fn-key) []) workers))]
     (stop-all :publisher/stop publishers)
     (stop-all :subscriber/stop subscribers)))
+
+(s/def ::doc string?)
+
+(s/def ::topic #{:pipeline-run/running :pipeline-run/completed :pipeline-run/failed
+                 :task-run/running :task-run/completed :task-run/failed})
+
+(s/def ::topics (s/coll-of ::topic :kind set? :min-count 1))
+
+(s/def ::args (s/coll-of symbol? :kind vector?))
+
+(s/def ::body (s/+ any?))
+
+(defn- parse-input
+  [spec input]
+  (let [result (s/conform spec input)]
+    (if-not (s/invalid? result)
+      result
+      (throw (ex-info "Spec violation"
+                      (s/explain-data spec input))))))
+
+(def pub-args (s/alt :docstring+args (s/cat :doc ::doc :topics ::topics :args ::args :body ::body)
+                     :args (s/cat :topics ::topics :args ::args :body ::body)))
+
+(defmacro
+  ^{:arglists '([name docstring topics args & body]
+                [name topics args & body])}
+  defpub
+  "Defines a new publisher. Topics is a set of topics to which this
+  publisher publishes messages. Implementers must return a seq of
+  messages within the body. The application's config is available as
+  the sole argument to the resulting function.
+
+  Example:
+
+  (defpub my-publisher
+  #{:task-run/running}
+  [config]
+    [#:message{:topic :task-run/running :resource ...}])
+
+  Publisher is a persistent map containing the following keys:
+
+  :publisher/name Keyword
+
+  Identifies this publisher. It's a keyword made up of the namespace
+  where this publisher was defined, plus the supplied name.
+
+  :publisher/topics Set of keywords
+
+  The topics that this publisher publishes messages to.
+
+  :publisher/start IFn
+
+  A function that takes two arguments: channels and config. Channels
+  is a persistent map containing async channels passed during the
+  initialization of the application. For instance: :channel/liveness,
+  to report heartbeats. Config is a persistent map returned by
+  tekton-watcher.config/read-config.
+
+  :publisher/stop IFn
+
+  A no arguments function that may be used to stop this publisher."
+  [name & forms]
+  (let [{:keys [doc topics args body]
+         :or   {doc ""}} (second (parse-input pub-args forms))]
+    `(def ~name
+       ~doc
+       (publisher ~(qualified-name *ns* (clojure.core/name name))
+                  ~topics
+                  (fn ~args
+                    ~@body)))))
+
+(def sub-args (s/alt :docstring+args (s/cat :doc ::doc :topic ::topic :args ::args :body ::body)
+                     :args (s/cat :topic ::topic :args ::args :body ::body)))
+
+(defmacro
+  ^{:arglists '([name docstring topic args & body]
+                [name topic args & body])}
+  defsub
+  "Defines a new subscriber. Topic is a keyword that represents the
+  topic from which this subscriber consumes messages. The resource
+  sent along with the message consumed and the application's config
+  are available within the supplied body.
+
+  Example:
+
+  (defsub my-subscriber :task-run/running
+  [task-run config]
+  (printf \"Task %s is running\" (get-in task-run [:metadata :name])))
+  Subscriber is a persistent map containing the following keys:
+
+  :subscriber/name Keyword
+
+  Identifies this subscriber. It's a keyword made up of the namespace
+  where this subscriber was defined, plus the supplied name.
+
+  :subscriber/topic Keyword
+
+  The topic from which this subscriber consumes messages.
+
+  :subscriber/start IFn
+
+  A function that takes three arguments: publisher, channels and
+  config. Publisher is a persistent map produced by defpub. Channels
+  is a persistent map containing async channels passed during the
+  initialization of the application. For instance: :channel/liveness,
+  to report heartbeats. Config is a persistent map returned by
+  tekton-watcher.config/read-config.
+
+  :subscriber/stop IFn
+
+  A no arguments function that may be used to stop this subscriber."
+  [name & forms]
+  (let [{:keys [doc topic args body]
+         :or   {doc ""}} (second (parse-input sub-args forms))]
+    `(def ~name
+       ~doc
+       (subscriber ~(qualified-name *ns* (clojure.core/name name))
+                   ~topic
+                   (fn ~args
+                     ~@body)))))

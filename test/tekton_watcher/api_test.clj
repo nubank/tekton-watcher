@@ -59,13 +59,15 @@
                              :stop  fn?}
                 (api/subscriber :sub1 :task-run/running identity)))))
 
+(def channels {})
+
 (def config {})
 
 (deftest messaging-test
   (testing "wires up publishers and subscribers"
     (let [publishers  [(api/publisher :pub1 #{:task-run/running} watch-running-tasks*)]
           subscribers [(api/subscriber :sub1 :task-run/running task-run-running*)]]
-      (api/start-messaging publishers subscribers config)
+      (api/start-messaging publishers subscribers channels config)
       (sleep-for 2)
       (api/stop-messaging publishers subscribers)
 
@@ -88,7 +90,7 @@
   (testing "publishers only dispatch messages to the correct subscribers"
     (let [publishers  [(api/publisher :pub1 #{:task-run/running} watch-running-tasks*)]
           subscribers [(api/subscriber :sub1 :task-run/succeeded task-run-succeeded*)]]
-      (api/start-messaging publishers subscribers config)
+      (api/start-messaging publishers subscribers channels config)
       (sleep-for 1)
       (api/stop-messaging publishers subscribers)
 
@@ -104,7 +106,7 @@
                        (api/publisher :pub2 #{:task-run/succeeded} watch-succeeded-tasks*)]
           subscribers [(api/subscriber :sub1 :task-run/running task-run-running*)
                        (api/subscriber :sub2 :task-run/succeeded task-run-succeeded*)]]
-      (api/start-messaging publishers subscribers config)
+      (api/start-messaging publishers subscribers channels config)
       (sleep-for 2)
       (api/stop-messaging publishers subscribers)
 
@@ -151,7 +153,7 @@
   (testing "wires up publishers and subscribers"
     (let [publishers  [watch-running-tasks]
           subscribers [task-run-running]]
-      (api/start-messaging publishers subscribers config)
+      (api/start-messaging publishers subscribers channels config)
       (sleep-for 1)
       (api/stop-messaging publishers subscribers)
 
