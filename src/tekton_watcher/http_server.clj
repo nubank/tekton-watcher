@@ -29,7 +29,7 @@
   config is a map returned by tekton-watcher.config/read-config."
   [config]
   (let [routes (app-routes config)]
-    (server/run-server routes {:port               9000
+    (server/run-server routes {:port               (get config :tekton-watcher.server/port)
                                :worker-name-prefix "tekton-watcher-worker-"
                                :error-logger       (fn [message exception]
                                                      (log/error exception :msg message))
