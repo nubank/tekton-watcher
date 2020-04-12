@@ -121,8 +121,8 @@
 
 (s/def ::doc string?)
 
-(s/def ::topic #{:pipeline-run/running :pipeline-run/completed :pipeline-run/failed
-                 :task-run/running :task-run/completed :task-run/failed})
+(s/def ::topic #{:pipeline-run/running :pipeline-run/succeeded :pipeline-run/failed
+                 :task-run/running :task-run/succeeded :task-run/failed})
 
 (s/def ::topics (s/coll-of ::topic :kind set? :min-count 1))
 
