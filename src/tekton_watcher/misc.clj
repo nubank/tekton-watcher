@@ -1,5 +1,6 @@
 (ns tekton-watcher.misc
   (:require [clojure.edn :as edn]
+            [clojure.spec.alpha :as s]
             [clojure.string :as string])
   (:import java.io.File))
 
@@ -42,3 +43,16 @@
   (string/replace template #"\{([^\}]+)\}" (fn [match]
                                              (str (get context (keyword (last match))
                                                        (first match))))))
+
+(defn parse-input
+  "Given a spec and an arbitrary data structure as the input, tries to
+  conform the input using the supplied spec.
+
+  Returns the conformed data or throws an exception if the data
+  doesn't conform to the spec."
+  [spec input]
+  (let [result (s/conform spec input)]
+    (if-not (s/invalid? result)
+      result
+      (throw (ex-info "Data doesn't conform to the spec"
+                      (s/explain-data spec input))))))

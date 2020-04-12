@@ -1,5 +1,6 @@
 (ns tekton-watcher.misc-test
   (:require [clojure.java.io :as io]
+            [clojure.spec.alpha :as s]
             [clojure.test :refer :all]
             [tekton-watcher.misc :as misc])
   (:import java.io.StringReader))
@@ -29,3 +30,17 @@
       "/namespaces/{namespace}/taskruns/{task}"    {:namespace "default" :task "task1"} "/namespaces/default/taskruns/task1"
       "/namespaces/{namespace}/taskruns"           {}                                   "/namespaces/{namespace}/taskruns"
       "/namespaces/{namespace}/taskruns/{task-id}" {:namespace "default" :task-id 1}    "/namespaces/default/taskruns/1")))
+
+(deftest parse-input-test
+  (testing "returns the conformed data structure"
+    (is (= [:a {:x 1}]
+           (misc/parse-input (s/alt :a (s/cat :x int?)
+                                    :b (s/cat :y string?))
+                             [1]))))
+
+  (testing "throws an exception when the supplied data doesn't conform to the
+  spec"
+    (is (thrown-with-msg? clojure.lang.ExceptionInfo
+                          #"^Data doesn't conform to the spec$"
+                          (misc/parse-input (s/cat :x int?)
+                                            [true])))))

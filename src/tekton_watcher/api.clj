@@ -130,14 +130,6 @@
 
 (s/def ::body (s/+ any?))
 
-(defn- parse-input
-  [spec input]
-  (let [result (s/conform spec input)]
-    (if-not (s/invalid? result)
-      result
-      (throw (ex-info "Spec violation"
-                      (s/explain-data spec input))))))
-
 (def pub-args (s/alt :docstring+args (s/cat :doc ::doc :topics ::topics :args ::args :body ::body)
                      :args (s/cat :topics ::topics :args ::args :body ::body)))
 
@@ -181,7 +173,7 @@
   A no arguments function that may be used to stop this publisher."
   [name & forms]
   (let [{:keys [doc topics args body]
-         :or   {doc ""}} (second (parse-input pub-args forms))]
+         :or   {doc ""}} (second (misc/parse-input pub-args forms))]
     `(def ~name
        ~doc
        (publisher ~(qualified-name *ns* (clojure.core/name name))
@@ -231,7 +223,7 @@
   A no arguments function that may be used to stop this subscriber."
   [name & forms]
   (let [{:keys [doc topic args body]
-         :or   {doc ""}} (second (parse-input sub-args forms))]
+         :or   {doc ""}} (second (misc/parse-input sub-args forms))]
     `(def ~name
        ~doc
        (subscriber ~(qualified-name *ns* (clojure.core/name name))
