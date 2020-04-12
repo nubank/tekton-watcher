@@ -130,11 +130,11 @@
 
 (s/def ::body (s/+ any?))
 
-(def pub-args (s/alt :docstring+args (s/cat :doc ::doc :topics ::topics :args ::args :body ::body)
+(def pub-args (s/alt :docstring+args (s/cat :topics ::topics :doc ::doc :args ::args :body ::body)
                      :args (s/cat :topics ::topics :args ::args :body ::body)))
 
 (defmacro
-  ^{:arglists '([name docstring topics args & body]
+  ^{:arglists '([name topics docstring args & body]
                 [name topics args & body])}
   defpub
   "Defines a new publisher. Topics is a set of topics to which this
@@ -181,11 +181,11 @@
                   (fn ~args
                     ~@body)))))
 
-(def sub-args (s/alt :docstring+args (s/cat :doc ::doc :topic ::topic :args ::args :body ::body)
+(def sub-args (s/alt :docstring+args (s/cat :topic ::topic :doc ::doc :args ::args :body ::body)
                      :args (s/cat :topic ::topic :args ::args :body ::body)))
 
 (defmacro
-  ^{:arglists '([name docstring topic args & body]
+  ^{:arglists '([name topic docstring args & body]
                 [name topic args & body])}
   defsub
   "Defines a new subscriber. Topic is a keyword that represents the
