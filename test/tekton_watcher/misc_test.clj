@@ -3,7 +3,8 @@
             [clojure.spec.alpha :as s]
             [clojure.test :refer :all]
             [tekton-watcher.misc :as misc])
-  (:import java.io.StringReader))
+  (:import java.io.StringReader
+           [java.time Duration LocalDateTime]))
 
 (deftest correlation-id-test
   (is (every? #(re-find #"[\da-zA-Z]{7}" %)
@@ -44,3 +45,27 @@
                           #"^Data doesn't conform to the spec$"
                           (misc/parse-input (s/cat :x int?)
                                             [true])))))
+
+(deftest duration-test
+  (testing "determines the duration of a task run"
+    (is (= (Duration/between
+            (LocalDateTime/of 2020 4 9 16 21 46)
+            (LocalDateTime/of 2020 4 9 16 23 9))
+           (misc/duration {:spec
+                           {:status
+                            {:startTime      "2020-04-09T16:21:46Z"
+                             :completionTime "2020-04-09T16:23:09Z"}}})))))
+
+(deftest display-duration-test
+  (are [start-time completion-time result] (= result (misc/display-duration {:spec
+                                                                             {:status
+                                                                              {:startTime start-time
+                                                                               :completionTime completion-time}}}))
+    "2020-04-09T16:23:09Z" "2020-04-09T16:23:09Z" "0 seconds"
+    "2020-04-09T16:23:12Z" "2020-04-09T16:23:13Z" "1 second"
+    "2020-04-09T16:23:00Z" "2020-04-09T16:23:59Z" "59 seconds"
+    "2020-04-09T16:00:00Z" "2020-04-09T16:01:00Z" "1 minute"
+    "2020-04-09T16:05:00Z" "2020-04-09T16:09:00Z" "4 minutes"
+    "2020-04-09T16:23:00Z" "2020-04-09T16:29:11Z" "6.18 minutes"
+    "2020-04-09T16:23:00Z" "2020-04-09T17:23:00Z" "1 hour"
+    "2020-04-09T16:11:00Z" "2020-04-09T18:21:28Z" "2.17 hours"))
