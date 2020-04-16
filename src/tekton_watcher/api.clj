@@ -3,6 +3,7 @@
             [clojure.core.async.impl.protocols :as async.impl]
             [clojure.spec.alpha :as s]
             [clojure.tools.logging :as log]
+            [tekton-watcher.health :as health]
             [tekton-watcher.misc :as misc])
   (:import clojure.lang.Keyword))
 
@@ -33,8 +34,9 @@
       (log/error t :out-message-error :publisher publisher-name))))
 
 (defn- start-publisher*
-  [{:channel/keys [out]} {:keys [publisher-name] :as options}]
+  [{:channel/keys [out liveness]} {:keys [publisher-name] :as options}]
   (go-loop []
+    (health/alive liveness publisher-name)
     (let [messages (get-messages options)]
       (doseq [message messages]
         (let [cid                              (misc/correlation-id)

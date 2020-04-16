@@ -122,3 +122,7 @@
                (testing "sends the request and awaits until the response returns"
                  (is (= {:message "Hello!"}
                         (http-client/send-and-await req-data)))))))
+
+(deftest error?-test
+  (is (http-client/error? #:http.error{:category :not-found}))
+  (is (not (http-client/error? {:message "Hello!"}))))

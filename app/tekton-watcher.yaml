@@ -78,6 +78,12 @@ spec:
       containers:
         - name: tekton-watcher
           image: alangh/tekton-watcher:0.1.9
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 9000
+            initialDelaySeconds: 60
+            periodSeconds: 60
           volumeMounts:
             - name: github-statuses-updater
               mountPath: "/etc/github-statuses-updater"
