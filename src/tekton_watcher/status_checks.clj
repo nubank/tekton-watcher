@@ -1,4 +1,4 @@
-(ns tekton-watcher.pulls
+(ns tekton-watcher.status-checks
   (:require [tekton-watcher.api :refer [defsub]]
             [tekton-watcher.http-client :as http-client]
             [tekton-watcher.misc :as misc]))
