@@ -5,8 +5,8 @@
             [tekton-watcher.config :as config]
             [tekton-watcher.health :as health]
             [tekton-watcher.http-server :as http-server]
-            [tekton-watcher.status-checks :as status-checks]
-            [tekton-watcher.runs :as runs]))
+            [tekton-watcher.runs :as runs]
+            [tekton-watcher.status-checks :as status-checks]))
 
 (def publishers
   "Publisher components."
