@@ -78,6 +78,8 @@ spec:
       containers:
         - name: tekton-watcher
           image: alangh/tekton-watcher:0.1.9
+          ports:
+            - containerPort: 9000
           livenessProbe:
             httpGet:
               path: /health/live
