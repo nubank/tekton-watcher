@@ -48,11 +48,11 @@
   [{:keys [status body opts error]}]
   (let [cid (opts :cid)]
     (when (or error (>= status 400))
-      #:http{:category :http/error
-             :cid      cid
-             :error    (or error
-                           (ex-info "http error" {:status status
-                                                  :body   (json-response-parser body)}))})))
+      #:http.error{:category  :http/error
+                   :cid       cid
+                   :throwable (or error
+                                  (ex-info "http error" {:status status
+                                                         :body   (json-response-parser body)}))})))
 
 (defn- handle-http-response
   [{:keys [status body] :as response}]
@@ -104,11 +104,11 @@
 
 (defn build-http-request
   "Returns a suited HTTP request map to be sent by the client."
-  [{:http/keys                                                      [verb url cid consumes produces]
-    :or                                                             {cid (misc/correlation-id)
-                                                                     consumes default-mime-type
-                                                                     produces default-mime-type
-                                                                     verb     :get} :as req-data}]
+  [{:http/keys                                                                                      [verb url cid consumes produces]
+    :or                                                                                             {cid      (misc/correlation-id)
+                                                                                                     consumes default-mime-type
+                                                                                                     produces default-mime-type
+                                                                                                     verb     :get} :as req-data}]
   (-> {:method     verb
        :url        url
        :cid        cid
@@ -134,3 +134,10 @@
 (defn send-and-await
   [req-data]
   (<!! (send-async req-data)))
+
+(defn error?
+  "Returns true when the response produced by send-async or
+  send-and-await represents an error."
+  [response]
+  (boolean
+   (:http.error/category response)))

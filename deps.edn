@@ -4,8 +4,10 @@
   org.clojure/core.async #:mvn{:version "0.4.500"}
   org.clojure/data.json #:mvn{:version "0.2.6"}
   org.clojure/tools.logging #:mvn{:version "0.5.0"}
+  compojure #:mvn{:version "1.6.1"}
   http-kit #:mvn{:version "2.4.0-alpha4"}
-  org.slf4j/slf4j-log4j12 #:mvn{:version "1.7.28"}}
+  org.slf4j/slf4j-log4j12 #:mvn{:version "1.7.28"}
+  ring/ring-json #:mvn{:version "0.5.0"}}
  :aliases
  {:dev
   {:extra-paths ["dev/resources" "test"]
