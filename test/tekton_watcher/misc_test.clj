@@ -51,16 +51,14 @@
     (is (= (Duration/between
             (LocalDateTime/of 2020 4 9 16 21 46)
             (LocalDateTime/of 2020 4 9 16 23 9))
-           (misc/duration {:spec
-                           {:status
-                            {:startTime      "2020-04-09T16:21:46Z"
-                             :completionTime "2020-04-09T16:23:09Z"}}})))))
+           (misc/duration {:status
+                           {:startTime      "2020-04-09T16:21:46Z"
+                            :completionTime "2020-04-09T16:23:09Z"}})))))
 
 (deftest display-duration-test
-  (are [start-time completion-time result] (= result (misc/display-duration {:spec
-                                                                             {:status
-                                                                              {:startTime start-time
-                                                                               :completionTime completion-time}}}))
+  (are [start-time completion-time result] (= result (misc/display-duration {:status
+                                                                             {:startTime start-time
+                                                                              :completionTime completion-time}}))
     "2020-04-09T16:23:09Z" "2020-04-09T16:23:09Z" "0 seconds"
     "2020-04-09T16:23:12Z" "2020-04-09T16:23:13Z" "1 second"
     "2020-04-09T16:23:00Z" "2020-04-09T16:23:59Z" "59 seconds"
