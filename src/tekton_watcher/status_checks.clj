@@ -15,11 +15,11 @@
                (get-in git-resource [:spec :params]))))
 
 (defn- get-git-resource
-  [task-run {:tekton.api/keys [url]}]
+  [task-run {:tekton.api.alpha/keys [url]}]
   (->> task-run
        :spec
-       :inputs
        :resources
+              :inputs
        (map #(get-in % [:resourceRef :name]))
        (map #(http-client/send-and-await #:http{:url         "{url}/pipelineresources/{resource-name}"
                                                 :path-params {:url           url
