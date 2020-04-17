@@ -19,7 +19,7 @@
   (->> task-run
        :spec
        :resources
-              :inputs
+       :inputs
        (map #(get-in % [:resourceRef :name]))
        (map #(http-client/send-and-await #:http{:url         "{url}/pipelineresources/{resource-name}"
                                                 :path-params {:url           url
@@ -48,16 +48,16 @@
   progress."
   [task-run config]
   (update-commit-status task-run config #:status{:state       "pending"
-                                                 :description "Your check is in progress..."}))
+                                                 :description "This check is in progress..."}))
 
 (defsub run-succeeded :task-run/succeeded
   "Updates the commit status with a message indicating that the check passed."
   [task-run config]
   (update-commit-status task-run config #:status{:state       "success"
-                                                 :description (str "Your check passed after " (misc/display-duration task-run))}))
+                                                 :description (format "This check passed after %s!" (misc/display-duration task-run))}))
 
 (defsub run-failed :task-run/failed
   "Updates the commit status with a message indicating that the check failed."
   [task-run config]
   (update-commit-status task-run config #:status{:state       "failure"
-                                                 :description (str "Your check failed after " (misc/display-duration task-run))}))
+                                                 :description (str "This check failed after " (misc/display-duration task-run))}))
