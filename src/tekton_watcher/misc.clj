@@ -75,8 +75,8 @@
   [task-run]
   (let [parse              (fn [^String instant]
                              (.. DateTimeFormatter ISO_INSTANT (parse instant instant-query)))
-        ^String start-time (get-in task-run [:spec :status :startTime])
-        ^String end-time   (get-in task-run [:spec :status :completionTime])]
+        ^String start-time (get-in task-run [:status :startTime])
+        ^String end-time   (get-in task-run [:status :completionTime])]
     (Duration/between (parse start-time)
                       (parse end-time))))
 
