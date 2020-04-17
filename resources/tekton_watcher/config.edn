@@ -1,10 +1,13 @@
-{:api.server/url "http://localhost:8080",
- :github.oauth-token/path "/etc/github-statuses-updater/oauth-token",
- :tekton.api/path "/apis/tekton.dev/v1alpha1",
- :tekton.api/url
- "{api.server/url}{tekton.api/path}/namespaces/{tekton/namespace}",
+{:tekton.api/path "/apis/tekton.dev/v1beta1",
  :tekton/namespace "default",
+ :tekton-watcher.server/port 9000,
+ :tekton.api.alpha/url
+ "{api.server/url}{tekton.api/path}/namespaces/{tekton/namespace}",
+ :api.server/url "http://localhost:8080",
+ :tekton.api.alpha/path "/apis/tekton.dev/v1alpha1",
  :tekton.dashboard/url "http://localhost:8081",
+ :github.oauth-token/path "/etc/github-statuses-updater/oauth-token",
  :tekton.dashboard/task-run
  "{tekton.dashboard/url}/#/namespaces/{tekton/namespace}/taskruns/{task-run}",
- :tekton-watcher.server/port 9000}
+ :tekton.api/url
+ "{api.server/url}{tekton.api/path}/namespaces/{tekton/namespace}"}
