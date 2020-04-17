@@ -77,7 +77,7 @@ spec:
       serviceAccountName: tekton-watcher
       containers:
         - name: tekton-watcher
-          image: alangh/tekton-watcher:0.1.9
+          image: alangh/tekton-watcher@sha256:64436a918df255d31b9c3d4a2be16128c812c680fcfa9d645681a772581e70c3
           ports:
             - containerPort: 9000
           livenessProbe:
