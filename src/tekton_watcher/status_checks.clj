@@ -1,4 +1,4 @@
-(ns tekton-watcher.pulls
+(ns tekton-watcher.status-checks
   (:require [tekton-watcher.api :refer [defsub]]
             [tekton-watcher.http-client :as http-client]
             [tekton-watcher.misc :as misc]))
@@ -15,11 +15,11 @@
                (get-in git-resource [:spec :params]))))
 
 (defn- get-git-resource
-  [task-run {:tekton.api/keys [url]}]
+  [task-run {:tekton.api.alpha/keys [url]}]
   (->> task-run
        :spec
-       :inputs
        :resources
+       :inputs
        (map #(get-in % [:resourceRef :name]))
        (map #(http-client/send-and-await #:http{:url         "{url}/pipelineresources/{resource-name}"
                                                 :path-params {:url           url
@@ -39,21 +39,25 @@
                                        :oauth-token oauth-token
                                        :path-params {:sha sha}
                                        :payload     {:state       state
-                                                     :context     (str "nubank/ci-cd: " task-name)
+                                                     :context     (str "Tekton: " task-name)
                                                      :description description
                                                      :target_url  (link-to-task-run-on-dashboard task-run config)}})))))
 
 (defsub run-started :task-run/running
+  "Updates the commit status with a message indicating that the check is in
+  progress."
   [task-run config]
   (update-commit-status task-run config #:status{:state       "pending"
-                                                 :description "Tekton is running your tests..."}))
+                                                 :description "This check is in progress..."}))
 
 (defsub run-succeeded :task-run/succeeded
+  "Updates the commit status with a message indicating that the check passed."
   [task-run config]
   (update-commit-status task-run config #:status{:state       "success"
-                                                 :description "your tests passed on Tekton!"}))
+                                                 :description (format "This check passed after %s!" (misc/display-duration task-run))}))
 
 (defsub run-failed :task-run/failed
+  "Updates the commit status with a message indicating that the check failed."
   [task-run config]
   (update-commit-status task-run config #:status{:state       "failure"
-                                                 :description "your tests failed on Tekton"}))
+                                                 :description (str "This check failed after " (misc/display-duration task-run))}))

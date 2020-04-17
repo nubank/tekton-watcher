@@ -8,7 +8,7 @@
             [tekton-watcher.misc :as misc])
   (:import java.net.URLEncoder))
 
-(def ^:private http-defaults
+(def http-defaults
   {:as               :stream
    :follow-redirects false
    :user-agent       "tekton-watcher"
@@ -48,13 +48,13 @@
   [{:keys [status body opts error]}]
   (let [cid (opts :cid)]
     (when (or error (>= status 400))
-      #:http{:category :http/error
-             :cid      cid
-             :error    (or error
-                           (ex-info "http error" {:status status
-                                                  :body   (json-response-parser body)}))})))
+      #:http.error{:category  :http/error
+                   :cid       cid
+                   :throwable (or error
+                                  (ex-info "http error" {:status status
+                                                         :body   (json-response-parser body)}))})))
 
-(defn handle-http-response
+(defn- handle-http-response
   [{:keys [status body] :as response}]
   (log-out-response response)
   (or (error response)
@@ -70,7 +70,7 @@
     (assoc request :body
            (json-request-parser payload))))
 
-(defn- form-encoder
+(defn form-encoder
   "Turns a Clojure map into a string in the x-www-form-urlencoded
   format."
   [data]
@@ -88,12 +88,15 @@
     request
     (update request :url #(str % "?" (form-encoder query-params)))))
 
-(defn- expand-path-params
+(defn- render-path-params
+  "Replaces placeholders in the form {placeholder} defined in the
+  request url by the values given in the :path-params map."
   [request {:http/keys [url path-params]}]
   (assoc request :url
          (misc/render url path-params)))
 
 (defn- add-oauth-token
+  "If :http/oauth-token is given, assoc's it into the request map."
   [request {:http/keys [oauth-token]}]
   (if oauth-token
     (assoc-in request [:headers "authorization"] (str "Bearer " oauth-token))
@@ -101,11 +104,11 @@
 
 (defn build-http-request
   "Returns a suited HTTP request map to be sent by the client."
-  [{:http/keys                                                      [verb url cid consumes produces]
-    :or                                                             {cid      "default"
-                                                                     consumes default-mime-type
-                                                                     produces default-mime-type
-                                                                     verb     :get} :as req-data}]
+  [{:http/keys                                                                                      [verb url cid consumes produces]
+    :or                                                                                             {cid      (misc/correlation-id)
+                                                                                                     consumes default-mime-type
+                                                                                                     produces default-mime-type
+                                                                                                     verb     :get} :as req-data}]
   (-> {:method     verb
        :url        url
        :cid        cid
@@ -114,7 +117,7 @@
                     "accept"       consumes}}
       (merge http-defaults)
       (add-oauth-token req-data)
-      (expand-path-params req-data)
+      (render-path-params req-data)
       (add-query-string req-data)
       (parse-request-body req-data)))
 
@@ -131,3 +134,10 @@
 (defn send-and-await
   [req-data]
   (<!! (send-async req-data)))
+
+(defn error?
+  "Returns true when the response produced by send-async or
+  send-and-await represents an error."
+  [response]
+  (boolean
+   (:http.error/category response)))
