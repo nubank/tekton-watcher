@@ -10,17 +10,22 @@
 
 (def publishers
   "Publisher components."
-  [runs/watch-running-tasks
-   runs/watch-completed-tasks])
+  [runs/watch-running-pipelineruns
+   runs/watch-running-taskruns
+   runs/watch-completed-pipelineruns
+   runs/watch-completed-taskruns])
 
 (def subscribers
   "Subscriber components."
-  [runs/run-started
-   runs/run-succeeded
-   runs/run-failed
-   status-checks/run-started
-   status-checks/run-succeeded
-   status-checks/run-failed])
+  [runs/pipelinerun-started
+   runs/taskrun-started
+   runs/pipelinerun-succeeded
+   runs/taskrun-succeeded
+   runs/pipelinerun-failed
+   runs/taskrun-failed
+   status-checks/taskrun-started
+   status-checks/taskrun-succeeded
+   status-checks/taskrun-failed])
 
 (defn start
   "Starts the tekton-watcher service.
