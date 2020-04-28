@@ -1,0 +1,12 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: lint
+  namespace: dev
+spec:
+  steps:
+    - image: ubuntu
+      name: lint
+      workingDir: /workspace/source-repo
+      command: ["/bin/bash"]
+      args: ["-c", "echo linting files...&&sleep 30s&&echo No offenses found"]

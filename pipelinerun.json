@@ -1,0 +1,420 @@
+{
+  "apiVersion": "tekton.dev/v1beta1",
+  "kind": "PipelineRun",
+  "metadata": {
+    "annotations": {
+      "tekton-watcher.github/commit-url" : "https://api.github.com/repos/nubank/heimdall/commits/d05601051204868846c6757cbfaab8ce7cba1929",
+      "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"tekton.dev/v1beta1\",\"kind\":\"Pipeline\",\"metadata\":{\"annotations\":{},\"name\":\"clojure-service-pr\",\"namespace\":\"pipelines\"},\"spec\":{\"params\":[{\"name\":\"service\",\"type\":\"string\"}],\"resources\":[{\"name\":\"source-repo\",\"type\":\"git\"}],\"tasks\":[{\"name\":\"cljfmt\",\"resources\":{\"inputs\":[{\"name\":\"source-repo\",\"resource\":\"source-repo\"}]},\"taskRef\":{\"name\":\"cljfmt\"}},{\"name\":\"kibit\",\"resources\":{\"inputs\":[{\"name\":\"source-repo\",\"resource\":\"source-repo\"}]},\"taskRef\":{\"name\":\"kibit\"}},{\"name\":\"nsorg\",\"resources\":{\"inputs\":[{\"name\":\"source-repo\",\"resource\":\"source-repo\"}]},\"taskRef\":{\"name\":\"nsorg\"}},{\"name\":\"unit-tests\",\"resources\":{\"inputs\":[{\"name\":\"source-repo\",\"resource\":\"source-repo\"}]},\"taskRef\":{\"name\":\"clojure-test\"}},{\"name\":\"integration-tests\",\"resources\":{\"inputs\":[{\"name\":\"source-repo\",\"resource\":\"source-repo\"}]},\"taskRef\":{\"name\":\"flows\"}},{\"name\":\"sachem\",\"params\":[{\"name\":\"service\",\"value\":\"$(params.service)\"},{\"name\":\"check-mode\",\"value\":\"check-only\"}],\"resources\":{\"inputs\":[{\"name\":\"source-repo\",\"resource\":\"source-repo\"}]},\"taskRef\":{\"name\":\"sachem\"}},{\"name\":\"check-dependencies\",\"resources\":{\"inputs\":[{\"name\":\"source-repo\",\"resource\":\"source-repo\"}]},\"taskRef\":{\"name\":\"check-dependencies\"}}]}}\n"
+    },
+    "creationTimestamp": "2020-04-17T21:45:03Z",
+    "generation": 1,
+    "labels": {
+      "nu/revision": "d05601051204868846c6757cbfaab8ce7cba1929",
+      "nu/service": "heimdall",
+      "tekton.dev/pipeline": "clojure-service-pr",
+      "triggers.tekton.dev/eventlistener": "clojure-service-pr-listener",
+      "triggers.tekton.dev/trigger": "pull-request-trigger",
+      "triggers.tekton.dev/triggers-eventid": "swl9d"
+    },
+    "name": "heimdall-pr-run-s6rhq",
+    "namespace": "pipelines",
+    "resourceVersion": "18031807",
+    "selfLink": "/apis/tekton.dev/v1beta1/namespaces/pipelines/pipelineruns/heimdall-pr-run-s6rhq",
+    "uid": "e1470e2d-59a5-4d02-b82c-377a719d59f9"
+  },
+  "spec": {
+    "params": [
+      {
+        "name": "service",
+        "value": "heimdall"
+      }
+    ],
+    "pipelineRef": {
+      "name": "clojure-service-pr"
+    },
+    "resources": [
+      {
+        "name": "source-repo",
+        "resourceRef": {
+          "name": "heimdall-s6rhq"
+        }
+      }
+    ],
+    "serviceAccountName": "maven-read",
+    "serviceAccountNames": [
+      {
+        "serviceAccountName": "sachem",
+        "taskName": "sachem"
+      }
+    ],
+    "timeout": "1h0m0s"
+  },
+  "status": {
+    "completionTime": "2020-04-17T21:46:42Z",
+    "conditions": [
+      {
+        "lastTransitionTime": "2020-04-17T21:45:21Z",
+        "message": "TaskRun heimdall-pr-run-s6rhq-cljfmt-tz2qb has failed",
+        "reason": "Failed",
+        "status": "False",
+        "type": "Succeeded"
+      }
+    ],
+    "startTime": "2020-04-17T21:45:03Z",
+    "taskRuns": {
+      "heimdall-pr-run-s6rhq-check-dependencies-z6lc7": {
+        "pipelineTaskName": "check-dependencies",
+        "status": {
+          "completionTime": "2020-04-17T21:45:34Z",
+          "conditions": [
+            {
+              "lastTransitionTime": "2020-04-17T21:45:34Z",
+              "message": "All Steps have completed executing",
+              "reason": "Succeeded",
+              "status": "True",
+              "type": "Succeeded"
+            }
+          ],
+          "podName": "heimdall-pr-run-s6rhq-check-dependencies-z6lc7-pod-hlfmw",
+          "resourcesResult": [
+            {
+              "key": "commit",
+              "resourceRef": {
+                "name": "heimdall-s6rhq"
+              },
+              "value": "d05601051204868846c6757cbfaab8ce7cba1929"
+            }
+          ],
+          "startTime": "2020-04-17T21:45:07Z",
+          "steps": [
+            {
+              "container": "step-check-dependencies",
+              "imageID": "docker-pullable://quay.io/nubank/clj-service-builder@sha256:38aac50757b7ef45ff257389c7f34ce7e8bf9a612a0ef90ae9b923b791e3bc5a",
+              "name": "check-dependencies",
+              "terminated": {
+                "containerID": "docker://3a4f37091c1a530af4e943ae50972c3e2f2a243a4baeaeeecfc322d161d941c1",
+                "exitCode": 0,
+                "finishedAt": "2020-04-17T21:45:33Z",
+                "reason": "Completed",
+                "startedAt": "2020-04-17T21:45:19Z"
+              }
+            },
+            {
+              "container": "step-git-source-heimdall-s6rhq-gxqvs",
+              "imageID": "docker-pullable://gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/git-init@sha256:0652d40ea69348683ae02b236a2b95c5e4c176132a66de2ffca4f130f1818ada",
+              "name": "git-source-heimdall-s6rhq-gxqvs",
+              "terminated": {
+                "containerID": "docker://40e1541cc6611d98b92a4f89a3f0c4d3bd7c3ecc1c72f4e064a41144859473c1",
+                "exitCode": 0,
+                "finishedAt": "2020-04-17T21:45:19Z",
+                "message": "[{\"key\":\"commit\",\"value\":\"d05601051204868846c6757cbfaab8ce7cba1929\",\"resourceRef\":{\"name\":\"heimdall-s6rhq\"}}]",
+                "reason": "Completed",
+                "startedAt": "2020-04-17T21:45:18Z"
+              }
+            }
+          ]
+        }
+      },
+      "heimdall-pr-run-s6rhq-cljfmt-tz2qb": {
+        "pipelineTaskName": "cljfmt",
+        "status": {
+          "completionTime": "2020-04-17T21:45:21Z",
+          "conditions": [
+            {
+              "lastTransitionTime": "2020-04-17T21:45:21Z",
+              "message": "\"step-cljfmt\" exited with code 1 (image: \"docker-pullable://quay.io/nubank/clj-service-builder@sha256:38aac50757b7ef45ff257389c7f34ce7e8bf9a612a0ef90ae9b923b791e3bc5a\"); for logs run: kubectl -n pipelines logs heimdall-pr-run-s6rhq-cljfmt-tz2qb-pod-96zdz -c step-cljfmt",
+              "reason": "Failed",
+              "status": "False",
+              "type": "Succeeded"
+            }
+          ],
+          "podName": "heimdall-pr-run-s6rhq-cljfmt-tz2qb-pod-96zdz",
+          "startTime": "2020-04-17T21:45:03Z",
+          "steps": [
+            {
+              "container": "step-cljfmt",
+              "imageID": "docker-pullable://quay.io/nubank/clj-service-builder@sha256:38aac50757b7ef45ff257389c7f34ce7e8bf9a612a0ef90ae9b923b791e3bc5a",
+              "name": "cljfmt",
+              "terminated": {
+                "containerID": "docker://a381358857f91ac7ea290c6a23624eb834e03ac7f15e77d73dcb2475ad4d01af",
+                "exitCode": 1,
+                "finishedAt": "2020-04-17T21:45:20Z",
+                "reason": "Error",
+                "startedAt": "2020-04-17T21:45:14Z"
+              }
+            },
+            {
+              "container": "step-git-source-heimdall-s6rhq-jkfwf",
+              "imageID": "docker-pullable://gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/git-init@sha256:0652d40ea69348683ae02b236a2b95c5e4c176132a66de2ffca4f130f1818ada",
+              "name": "git-source-heimdall-s6rhq-jkfwf",
+              "terminated": {
+                "containerID": "docker://5c18d9b37997c2231aa0b87d13d6fd33c607f0cafbf58cee4154d12fd83c132d",
+                "exitCode": 0,
+                "finishedAt": "2020-04-17T21:45:13Z",
+                "message": "[{\"key\":\"commit\",\"value\":\"d05601051204868846c6757cbfaab8ce7cba1929\",\"resourceRef\":{\"name\":\"heimdall-s6rhq\"}}]",
+                "reason": "Completed",
+                "startedAt": "2020-04-17T21:45:12Z"
+              }
+            }
+          ]
+        }
+      },
+      "heimdall-pr-run-s6rhq-integration-tests-hhwdn": {
+        "pipelineTaskName": "integration-tests",
+        "status": {
+          "completionTime": "2020-04-17T21:46:04Z",
+          "conditions": [
+            {
+              "lastTransitionTime": "2020-04-17T21:46:04Z",
+              "message": "All Steps have completed executing",
+              "reason": "Succeeded",
+              "status": "True",
+              "type": "Succeeded"
+            }
+          ],
+          "podName": "heimdall-pr-run-s6rhq-integration-tests-hhwdn-pod-pbf5j",
+          "resourcesResult": [
+            {
+              "key": "commit",
+              "resourceRef": {
+                "name": "heimdall-s6rhq"
+              },
+              "value": "d05601051204868846c6757cbfaab8ce7cba1929"
+            }
+          ],
+          "startTime": "2020-04-17T21:45:05Z",
+          "steps": [
+            {
+              "container": "step-test",
+              "imageID": "docker-pullable://quay.io/nubank/clj-service-builder@sha256:38aac50757b7ef45ff257389c7f34ce7e8bf9a612a0ef90ae9b923b791e3bc5a",
+              "name": "test",
+              "terminated": {
+                "containerID": "docker://5888da22f4404a10d96f507bd123f338526c24633c7b72a807af100d5313a9dd",
+                "exitCode": 0,
+                "finishedAt": "2020-04-17T21:46:03Z",
+                "reason": "Completed",
+                "startedAt": "2020-04-17T21:45:16Z"
+              }
+            },
+            {
+              "container": "step-git-source-heimdall-s6rhq-6cx87",
+              "imageID": "docker-pullable://gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/git-init@sha256:0652d40ea69348683ae02b236a2b95c5e4c176132a66de2ffca4f130f1818ada",
+              "name": "git-source-heimdall-s6rhq-6cx87",
+              "terminated": {
+                "containerID": "docker://c1d11b5bdc695455d914abd9351ec1e75048cfb8a99c75bf39026fc44a4bd04c",
+                "exitCode": 0,
+                "finishedAt": "2020-04-17T21:45:15Z",
+                "message": "[{\"key\":\"commit\",\"value\":\"d05601051204868846c6757cbfaab8ce7cba1929\",\"resourceRef\":{\"name\":\"heimdall-s6rhq\"}}]",
+                "reason": "Completed",
+                "startedAt": "2020-04-17T21:45:15Z"
+              }
+            }
+          ]
+        }
+      },
+      "heimdall-pr-run-s6rhq-kibit-xdxpz": {
+        "pipelineTaskName": "kibit",
+        "status": {
+          "completionTime": "2020-04-17T21:45:41Z",
+          "conditions": [
+            {
+              "lastTransitionTime": "2020-04-17T21:45:41Z",
+              "message": "All Steps have completed executing",
+              "reason": "Succeeded",
+              "status": "True",
+              "type": "Succeeded"
+            }
+          ],
+          "podName": "heimdall-pr-run-s6rhq-kibit-xdxpz-pod-c4cnd",
+          "resourcesResult": [
+            {
+              "key": "commit",
+              "resourceRef": {
+                "name": "heimdall-s6rhq"
+              },
+              "value": "d05601051204868846c6757cbfaab8ce7cba1929"
+            }
+          ],
+          "startTime": "2020-04-17T21:45:03Z",
+          "steps": [
+            {
+              "container": "step-kibit",
+              "imageID": "docker-pullable://quay.io/nubank/clj-service-builder@sha256:38aac50757b7ef45ff257389c7f34ce7e8bf9a612a0ef90ae9b923b791e3bc5a",
+              "name": "kibit",
+              "terminated": {
+                "containerID": "docker://2f24bb72834558119aa54af988109049d1208795559f59efefb56f495de2afbd",
+                "exitCode": 0,
+                "finishedAt": "2020-04-17T21:45:41Z",
+                "reason": "Completed",
+                "startedAt": "2020-04-17T21:45:13Z"
+              }
+            },
+            {
+              "container": "step-git-source-heimdall-s6rhq-bl7hc",
+              "imageID": "docker-pullable://gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/git-init@sha256:0652d40ea69348683ae02b236a2b95c5e4c176132a66de2ffca4f130f1818ada",
+              "name": "git-source-heimdall-s6rhq-bl7hc",
+              "terminated": {
+                "containerID": "docker://99f2a0bd47b7a4df45ecd844fa1356cca400b72d7adc9f30104a98606c191a53",
+                "exitCode": 0,
+                "finishedAt": "2020-04-17T21:45:12Z",
+                "message": "[{\"key\":\"commit\",\"value\":\"d05601051204868846c6757cbfaab8ce7cba1929\",\"resourceRef\":{\"name\":\"heimdall-s6rhq\"}}]",
+                "reason": "Completed",
+                "startedAt": "2020-04-17T21:45:12Z"
+              }
+            }
+          ]
+        }
+      },
+      "heimdall-pr-run-s6rhq-nsorg-c6rj8": {
+        "pipelineTaskName": "nsorg",
+        "status": {
+          "completionTime": "2020-04-17T21:45:22Z",
+          "conditions": [
+            {
+              "lastTransitionTime": "2020-04-17T21:45:22Z",
+              "message": "All Steps have completed executing",
+              "reason": "Succeeded",
+              "status": "True",
+              "type": "Succeeded"
+            }
+          ],
+          "podName": "heimdall-pr-run-s6rhq-nsorg-c6rj8-pod-sx8px",
+          "resourcesResult": [
+            {
+              "key": "commit",
+              "resourceRef": {
+                "name": "heimdall-s6rhq"
+              },
+              "value": "d05601051204868846c6757cbfaab8ce7cba1929"
+            }
+          ],
+          "startTime": "2020-04-17T21:45:03Z",
+          "steps": [
+            {
+              "container": "step-nsorg",
+              "imageID": "docker-pullable://quay.io/nubank/clj-service-builder@sha256:38aac50757b7ef45ff257389c7f34ce7e8bf9a612a0ef90ae9b923b791e3bc5a",
+              "name": "nsorg",
+              "terminated": {
+                "containerID": "docker://1146e3e82116264a54038a1d60896f5056ff4ac6c818ad0e8269e1e1a7afcbbe",
+                "exitCode": 0,
+                "finishedAt": "2020-04-17T21:45:21Z",
+                "reason": "Completed",
+                "startedAt": "2020-04-17T21:45:15Z"
+              }
+            },
+            {
+              "container": "step-git-source-heimdall-s6rhq-wbgqt",
+              "imageID": "docker-pullable://gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/git-init@sha256:0652d40ea69348683ae02b236a2b95c5e4c176132a66de2ffca4f130f1818ada",
+              "name": "git-source-heimdall-s6rhq-wbgqt",
+              "terminated": {
+                "containerID": "docker://b1ecb59370d41bb3f500b70994eb80de267397b0d5047934419c62e770e57948",
+                "exitCode": 0,
+                "finishedAt": "2020-04-17T21:45:14Z",
+                "message": "[{\"key\":\"commit\",\"value\":\"d05601051204868846c6757cbfaab8ce7cba1929\",\"resourceRef\":{\"name\":\"heimdall-s6rhq\"}}]",
+                "reason": "Completed",
+                "startedAt": "2020-04-17T21:45:14Z"
+              }
+            }
+          ]
+        }
+      },
+      "heimdall-pr-run-s6rhq-sachem-hgxdw": {
+        "pipelineTaskName": "sachem",
+        "status": {
+          "completionTime": "2020-04-17T21:46:42Z",
+          "conditions": [
+            {
+              "lastTransitionTime": "2020-04-17T21:46:42Z",
+              "message": "All Steps have completed executing",
+              "reason": "Succeeded",
+              "status": "True",
+              "type": "Succeeded"
+            }
+          ],
+          "podName": "heimdall-pr-run-s6rhq-sachem-hgxdw-pod-l94w6",
+          "resourcesResult": [
+            {
+              "key": "commit",
+              "resourceRef": {
+                "name": "heimdall-s6rhq"
+              },
+              "value": "d05601051204868846c6757cbfaab8ce7cba1929"
+            }
+          ],
+          "startTime": "2020-04-17T21:45:05Z",
+          "steps": [
+            {
+              "container": "step-sachem",
+              "imageID": "docker-pullable://quay.io/nubank/nu-sachem-runner@sha256:702ea8d0349915ebac9eb49eb5ba3c77de0a69eae1cec8460d99528ca244e4ee",
+              "name": "sachem",
+              "terminated": {
+                "containerID": "docker://d6e0ddd828a97155f222eb84988948b65c0e8314b08af41a92a4462539065841",
+                "exitCode": 0,
+                "finishedAt": "2020-04-17T21:46:42Z",
+                "reason": "Completed",
+                "startedAt": "2020-04-17T21:45:18Z"
+              }
+            },
+            {
+              "container": "step-git-source-heimdall-s6rhq-99pgb",
+              "imageID": "docker-pullable://gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/git-init@sha256:0652d40ea69348683ae02b236a2b95c5e4c176132a66de2ffca4f130f1818ada",
+              "name": "git-source-heimdall-s6rhq-99pgb",
+              "terminated": {
+                "containerID": "docker://29786406ed60c1e4077b23568b6c249427502aa3282f188a2334d72be2adca3d",
+                "exitCode": 0,
+                "finishedAt": "2020-04-17T21:45:17Z",
+                "message": "[{\"key\":\"commit\",\"value\":\"d05601051204868846c6757cbfaab8ce7cba1929\",\"resourceRef\":{\"name\":\"heimdall-s6rhq\"}}]",
+                "reason": "Completed",
+                "startedAt": "2020-04-17T21:45:17Z"
+              }
+            }
+          ]
+        }
+      },
+      "heimdall-pr-run-s6rhq-unit-tests-d2c7p": {
+        "pipelineTaskName": "unit-tests",
+        "status": {
+          "completionTime": "2020-04-17T21:45:58Z",
+          "conditions": [
+            {
+              "lastTransitionTime": "2020-04-17T21:45:58Z",
+              "message": "\"step-test\" exited with code 1 (image: \"docker-pullable://quay.io/nubank/clj-service-builder@sha256:38aac50757b7ef45ff257389c7f34ce7e8bf9a612a0ef90ae9b923b791e3bc5a\"); for logs run: kubectl -n pipelines logs heimdall-pr-run-s6rhq-unit-tests-d2c7p-pod-wss6k -c step-test",
+              "reason": "Failed",
+              "status": "False",
+              "type": "Succeeded"
+            }
+          ],
+          "podName": "heimdall-pr-run-s6rhq-unit-tests-d2c7p-pod-wss6k",
+          "startTime": "2020-04-17T21:45:03Z",
+          "steps": [
+            {
+              "container": "step-test",
+              "imageID": "docker-pullable://quay.io/nubank/clj-service-builder@sha256:38aac50757b7ef45ff257389c7f34ce7e8bf9a612a0ef90ae9b923b791e3bc5a",
+              "name": "test",
+              "terminated": {
+                "containerID": "docker://c62db016f0e27f5e408223f41fae2307adc7b5cbe664060a77d9efe8ef26caf4",
+                "exitCode": 1,
+                "finishedAt": "2020-04-17T21:45:57Z",
+                "reason": "Error",
+                "startedAt": "2020-04-17T21:45:14Z"
+              }
+            },
+            {
+              "container": "step-git-source-heimdall-s6rhq-jxlgz",
+              "imageID": "docker-pullable://gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/git-init@sha256:0652d40ea69348683ae02b236a2b95c5e4c176132a66de2ffca4f130f1818ada",
+              "name": "git-source-heimdall-s6rhq-jxlgz",
+              "terminated": {
+                "containerID": "docker://8427d899d7425f8236845b59db34bf92594c2948d944019290d4a99544063422",
+                "exitCode": 0,
+                "finishedAt": "2020-04-17T21:45:13Z",
+                "message": "[{\"key\":\"commit\",\"value\":\"d05601051204868846c6757cbfaab8ce7cba1929\",\"resourceRef\":{\"name\":\"heimdall-s6rhq\"}}]",
+                "reason": "Completed",
+                "startedAt": "2020-04-17T21:45:13Z"
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
