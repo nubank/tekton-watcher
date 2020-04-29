@@ -1,0 +1,36 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: tekton-watcher-role
+rules:
+- apiGroups:
+  - tekton.dev
+  resources:
+  - pipelines
+  - pipelineresources
+  - pipelineruns
+  - tasks
+  - taskruns
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - tekton.dev
+  resources:
+  - pipelineruns
+  - taskruns
+  verbs:
+    - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: tekton-watcher-role-binding
+subjects:
+  - kind: ServiceAccount
+    name: tekton-watcher
+    namespace: tekton-watcher
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tekton-watcher-role
