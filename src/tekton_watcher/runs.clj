@@ -5,46 +5,69 @@
   (:require [tekton-watcher.api :refer [defpub defsub]]
             [tekton-watcher.http-client :as http-client]))
 
-(defn- contains-reasons?
-  "Given a run object (either a pipelinerun or a taskrun) returns true if it contains at least one of the supplied reasons (set of strings)."
-  [run reasons]
-  (->> run
+(defn taskrun-completed?
+  "Given a taskrun, returns true if it is completed (all steps have
+  terminated) or false otherwise."
+  [taskrun]
+  (->> taskrun
        :status
        :conditions
-       (some #(reasons (:reason %)))))
+       (every? #(not= "Running" (:reason %)))))
+
+(defn pipelinerun-completed?
+  "Given a pipelinerun, returns true if it is completed (all taskruns
+  therein contained have terminated) or false otherwise."
+  [pipelinerun]
+  (->> pipelinerun
+       :status
+       :taskRuns
+       vals
+       (every? taskrun-completed?)))
 
 (defn- list-runs
   "List pipeline or task runs matching the supplied label selectors and
-  reasons."
-  [{:tekton.api/keys [url]} resource-kind label-selectors reasons]
+  predicate."
+  [{:tekton.api/keys [url]} resource-kind label-selectors predicate]
   (->> (http-client/send-and-await #:http{:url          "{url}/{resource-kind}"
                                           :path-params  {:url           url
                                                          :resource-kind resource-kind}
                                           :query-params {:labelSelector label-selectors}})
        :items
-       (filter #(contains-reasons? % reasons))))
+       (filter predicate)))
 
 (defn get-running-pipelineruns
   "Gets all in-progress pipelineruns that haven't watched yet."
   [config]
-  (list-runs config "pipelineruns" "!tekton-watcher/running-event-fired,!tekton-watcher/completed-event-fired" #{"Running"}))
+  (list-runs config
+             "pipelineruns"
+             "!tekton-watcher/running-event-fired,!tekton-watcher/completed-event-fired"
+             (complement pipelinerun-completed?)))
 
 (defn get-completed-pipelineruns
   "Gets all completed pipelineruns (either succeeded or failed ones)
   that haven't marked yet as completed by the watcher."
   [config]
-  (list-runs config "pipelineruns" "tekton-watcher/running-event-fired,!tekton-watcher/completed-event-fired" #{"Succeeded" "Failed"}))
+  (list-runs config
+             "pipelineruns"
+             "tekton-watcher/running-event-fired,!tekton-watcher/completed-event-fired"
+             pipelinerun-completed?))
 
 (defn get-running-taskruns
   "Gets all in-progress taskruns that haven't watched yet."
   [config]
-  (list-runs config "taskruns" "!tekton-watcher/running-event-fired,!tekton-watcher/completed-event-fired" #{"Running"}))
+  (list-runs config
+             "taskruns"
+             "!tekton-watcher/running-event-fired,!tekton-watcher/completed-event-fired"
+             (complement taskrun-completed?)))
 
 (defn get-completed-taskruns
   "Gets all completed taskruns (either succeeded or failed ones)
   that haven't marked yet as completed by the watcher."
   [config]
-  (list-runs config "taskruns" "tekton-watcher/running-event-fired,!tekton-watcher/completed-event-fired" #{"Succeeded" "Failed"}))
+  (list-runs config
+             "taskruns"
+             "tekton-watcher/running-event-fired,!tekton-watcher/completed-event-fired"
+             taskrun-completed?))
 
 (defn- add-label
   "Patches a run object (either a pipelinerun or a taskrun) by adding

@@ -1,0 +1,12 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  namespace: dev
+  name: test-pipeline-run-1
+  annotations:
+    tekton-watcher.github/repository-owner: nubank
+    tekton-watcher.github/repository-name: heimdall
+    tekton-watcher.github/commit-sha: d05601051204868846c6757cbfaab8ce7cba1929
+spec:
+  pipelineRef:
+    name: test-pipeline
