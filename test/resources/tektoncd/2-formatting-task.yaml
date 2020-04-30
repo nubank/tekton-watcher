@@ -1,0 +1,12 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: formatting
+  namespace: dev
+spec:
+  steps:
+    - image: ubuntu
+      name: check-formatting
+      workingDir: /workspace/source-repo
+      command: ["/bin/bash"]
+      args: ["-c", "echo Checking file formatting...&&sleep 10s&&echo Problems found!&&exit 1"]

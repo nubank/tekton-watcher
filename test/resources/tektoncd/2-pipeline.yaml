@@ -8,6 +8,9 @@ spec:
     - name: lint
       taskRef:
         name: lint
+    - name: check-formatting
+      taskRef:
+        name: formatting
     - name: unit-tests
       taskRef:
         name: unit-tests
