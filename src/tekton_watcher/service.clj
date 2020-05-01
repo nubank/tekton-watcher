@@ -1,4 +1,5 @@
 (ns tekton-watcher.service
+  (:gen-class)
   (:require [clojure.core.async :as async]
             [clojure.tools.logging :as log]
             [tekton-watcher.api :as api]

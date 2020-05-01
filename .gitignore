@@ -1,5 +1,6 @@
 .cpcache
 .nrepl-port
+.vessel
 logs
 pom.xml
 scratch.clj
