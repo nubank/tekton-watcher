@@ -26,16 +26,28 @@ spec:
             initialDelaySeconds: 60
             periodSeconds: 60
           volumeMounts:
-            - name: github-statuses-updater
-              mountPath: "/etc/github-statuses-updater"
+            - name: github-oauth-token
+              mountPath: "/etc/tekton-watcher/github"
+              readOnly: true
+            - name: slack-oauth-token
+              mountPath: "/etc/tekton-watcher/slack"
               readOnly: true
             - name: config
               mountPath: "/etc/tekton-watcher"
               readOnly: true
+            - name: slack-templates
+              mountPath: "/etc/tekton-watcher/slack-templates"
+              readOnly: true
       volumes:
-        - name: github-statuses-updater
+        - name: github-oauth-token
           secret:
-            secretName: github-statuses-updater
+            secretName: github-oauth-token
+            - name: slack-oauth-token
+          secret:
+            secretName: slack-oauth-token
         - name: config
           configMap:
-            name: tekton-watcher-config
+            name: config-customizations
+          - name: slack-templates
+          configMap:
+            name: config-slack-templates
