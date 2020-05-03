@@ -1,16 +1,15 @@
-tag = 0.1.$(shell git rev-list --count master)
-image_name = alangh/tekton-watcher
-image = $(image_name):$(tag)
+tag = 0.1.$(shell git rev-list --count HEAD)
 
 .PHONY: build test
 
 build:
-	@docker build -t $(image) .
+	@./build/containerize.sh $(tag)
 
 test:
-	@./build/test.sh
+	@./build/test/test.sh
 
-release: build
-	@git tag $(tag) && git push origin $(tag)
-	@docker push $(image)
-	@echo "Done"
+release:
+	@./build/release.sh $(tag)
+
+clean:
+	@rm -rf target

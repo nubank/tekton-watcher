@@ -1,0 +1,7 @@
+{
+    "image": {
+        "registry": "docker.io",
+        "repository": "openjdk",
+        "tag": "11-jdk-slim"
+    }
+}

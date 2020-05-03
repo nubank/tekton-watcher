@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tekton-watcher
+  namespace: tekton-watcher
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tekton-watcher
+  template:
+    metadata:
+     labels:
+       app: tekton-watcher
+    spec:
+      serviceAccountName: tekton-watcher
+      containers:
+        - name: kubectl
+          image: bitnami/kubectl@sha256:6918af607d3bd286db3c5b75f84e8f4687bb149348ea571cac6bec65aca8fdea
+          ## API gateway between Kubernetes API server and tekton-watcher application
+          args: ["proxy", "--port", "8080"]
+        - name: tekton-watcher
+          image: alangh/tekton-watcher:0.1.56
+          command: ["tekton-watcher"]
+          ports:
+            - containerPort: 9000
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 9000
+            initialDelaySeconds: 60
+            periodSeconds: 60
+          volumeMounts:
+            - name: github-oauth-token
+              mountPath: "/etc/tekton-watcher/github"
+              readOnly: true
+            - name: slack-oauth-token
+              mountPath: "/etc/tekton-watcher/slack"
+              readOnly: true
+            - name: config
+              mountPath: "/etc/tekton-watcher"
+              readOnly: true
+            - name: slack-templates
+              mountPath: "/etc/tekton-watcher/slack/templates"
+              readOnly: true
+      volumes:
+        - name: github-oauth-token
+          secret:
+            secretName: github-oauth-token
+        - name: slack-oauth-token
+          secret:
+            secretName: slack-oauth-token
+        - name: config
+          configMap:
+            name: config-customizations
+        - name: slack-templates
+          configMap:
+            name: config-slack-templates
