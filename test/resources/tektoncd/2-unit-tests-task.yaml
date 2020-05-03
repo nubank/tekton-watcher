@@ -1,0 +1,12 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: unit-tests
+  namespace: dev
+spec:
+  steps:
+    - image: ubuntu
+      name: unit-tests
+      workingDir: /workspace/source-repo
+      command: ["/bin/bash"]
+      args: ["-c", "echo Running tests...&&sleep 30s&&echo All checks succeeded"]

@@ -43,20 +43,20 @@
                                                      :description description
                                                      :target_url  (link-to-task-run-on-dashboard task-run config)}})))))
 
-(defsub run-started :task-run/running
+(defsub taskrun-started :task-run/running
   "Updates the commit status with a message indicating that the check is in
   progress."
   [task-run config]
   (update-commit-status task-run config #:status{:state       "pending"
                                                  :description "This check is in progress..."}))
 
-(defsub run-succeeded :task-run/succeeded
+(defsub taskrun-succeeded :task-run/succeeded
   "Updates the commit status with a message indicating that the check passed."
   [task-run config]
   (update-commit-status task-run config #:status{:state       "success"
                                                  :description (format "This check passed after %s!" (misc/display-duration task-run))}))
 
-(defsub run-failed :task-run/failed
+(defsub taskrun-failed :task-run/failed
   "Updates the commit status with a message indicating that the check failed."
   [task-run config]
   (update-commit-status task-run config #:status{:state       "failure"

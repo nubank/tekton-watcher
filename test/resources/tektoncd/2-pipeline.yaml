@@ -1,0 +1,16 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: test-pipeline
+  namespace: dev
+spec:
+  tasks:
+    - name: lint
+      taskRef:
+        name: lint
+    - name: check-formatting
+      taskRef:
+        name: formatting
+    - name: unit-tests
+      taskRef:
+        name: unit-tests
