@@ -24,7 +24,7 @@ kubectl apply -f app/*.yaml
 | `:api.server/url` | `"http://localhost:8080"` | The Kubernetes REST API endpoint |
 | `:github.oauth-token/path` | `"/etc/github-statuses-updater/oauth-token"` | Path to GitHub OAuth Token |
 | `:tekton/namespace` | `"default"` | Namespace where Tekton Pipelines are deployed |
-| `:tekton-watcher.server/port` | `9000` | Port that Tekton Watcher expose heatlcheck in `/health/live` path |
+| `:tekton-watcher.server/port` | `9000` | Port that Tekton Watcher expose healthcheck in `/health/live` path |
 | `:tekton.api/path` | `"/apis/tekton.dev/v1beta1"` | Tekton API version |
 | `:tekton.api/url` | `"{api.server/url}{tekton.api/path}/namespaces/{tekton/namespace}"` | Kubectl proxy Tekton resources path |
 | `:tekton.api.alpha/path` | `"/apis/tekton.dev/v1alpha1"` | Tekton API Alpha version |
