@@ -4,13 +4,15 @@
             [tekton-watcher.http-client :as http-client]
             [tekton-watcher.runs :as runs]))
 
-(def in-progress-pipelinerun {:status
+(def in-progress-pipelinerun {:kind "PipelineRun"
+                              :status
                               {:taskRuns
                                {:test-pipeline-run-1-lint-mb9g5
                                 {:pipelineTaskName "lint"
                                  :status
                                  {:conditions
                                   [{:reason "Failed"
+                                    :status "False"
                                     :type   "Succeeded"}]}}
                                 :test-pipeline-run-1-unit-tests-r9kn5
                                 {:status
@@ -20,33 +22,47 @@
                                     :type   "Succeeded"}]}}}}})
 
 (def succeeded-pipelinerun
-  {:status
-   {:taskRuns
+  {:kind "PipelineRun"
+   :status
+   {:conditions
+    [{:reason "Succeeded"
+      :status "True"
+      :type   "Succeeded"}]
+    :taskRuns
     {:test-pipeline-run-1-lint-mb9g5
      {:pipelineTaskName "lint"
       :status
       {:conditions
        [{:reason "Succeeded"
+         :status "True"
          :type   "Succeeded"}]}}
      :test-pipeline-run-1-unit-tests-r9kn5
      {:status
       {:conditions
        [{:reason "Succeeded"
+         :status "True"
          :type   "Succeeded"}]}}}}})
 
 (def failed-pipelinerun
-  {:status
-   {:taskRuns
+  {:kind "PipelineRun"
+   :status
+   {:conditions
+    [{:reason "Failed"
+      :status "False"
+      :type   "Succeeded"}]
+    :taskRuns
     {:test-pipeline-run-1-lint-mb9g5
      {:pipelineTaskName "lint"
       :status
       {:conditions
        [{:reason "Failed"
+         :status "False"
          :type   "Succeeded"}]}}
      :test-pipeline-run-1-unit-tests-r9kn5
      {:status
       {:conditions
        [{:reason "Succeeded"
+         :status "True"
          :type   "Succeeded"}]}}}}})
 
 (deftest pipelinerun-completed?-test
@@ -56,21 +72,24 @@
     failed-pipelinerun      true))
 
 (def in-progress-taskrun
-  {:status
+  {:kind "TaskRun"
+   :status
    {:conditions
     [{:reason "Running"
-      :status "true"
+      :status "Unknown"
       :type   "Succeeded"}]}})
 
 (def succeeded-taskrun
-  {:status
+  {:kind "TaskRun"
+   :status
    {:conditions
     [{:reason "Succeeded"
-      :status "true"
+      :status "True"
       :type   "Succeeded"}]}})
 
 (def failed-taskrun
-  {:status
+  {:kind "TaskRun"
+   :status
    {:conditions
     [{:reason "Failed"
       :status "False"
@@ -119,3 +138,12 @@
                 {:items [in-progress-taskrun succeeded-taskrun failed-taskrun]}]
                (is (= [succeeded-taskrun failed-taskrun]
                       (runs/get-completed-taskruns {:tekton.api/url "url"}))))))
+
+(deftest message-topic-test
+  (testing "determines the topic that each pipeline and task run belongs to"
+    (are [run topic]
+         (= topic (runs/message-topic run))
+      succeeded-pipelinerun :pipeline-run/succeeded
+      failed-pipelinerun    :pipeline-run/failed
+      succeeded-taskrun     :task-run/succeeded
+      failed-taskrun        :task-run/failed)))

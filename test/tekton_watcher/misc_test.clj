@@ -27,10 +27,11 @@
 (deftest render-test
   (testing "replaces the placeholders with the values supplied in the context map"
     (are [template context result] (= result (misc/render template context))
-      "/namespaces/{namespace}/taskruns"           {:namespace "default"}               "/namespaces/default/taskruns"
-      "/namespaces/{namespace}/taskruns/{task}"    {:namespace "default" :task "task1"} "/namespaces/default/taskruns/task1"
-      "/namespaces/{namespace}/taskruns"           {}                                   "/namespaces/{namespace}/taskruns"
-      "/namespaces/{namespace}/taskruns/{task-id}" {:namespace "default" :task-id 1}    "/namespaces/default/taskruns/1")))
+      "/namespaces/{namespace}/taskruns"            {:namespace "default"}                                "/namespaces/default/taskruns"
+      "/namespaces/{namespace}/taskruns/{task}"     {:namespace "default" :task "task1"}                  "/namespaces/default/taskruns/task1"
+      "/namespaces/{namespace}/taskruns"            {}                                                    "/namespaces/{namespace}/taskruns"
+      "/namespaces/{namespace}/taskruns/{task-id}"  {:namespace "default" :task-id 1}                     "/namespaces/default/taskruns/1"
+      "Hello {[github/commit-data committer name]}" {:github/commit-data {:committer {:name "John Doe"}}} "Hello John Doe")))
 
 (deftest parse-input-test
   (testing "returns the conformed data structure"

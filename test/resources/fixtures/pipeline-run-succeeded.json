@@ -1,0 +1,16 @@
+[
+    {
+        "type": "section",
+        "text": {
+            "text": "Hey {receiver/name},\nThe pipelinerun succeeded!",
+            "type": "mrkdwn"
+        }
+    },
+    {
+        "type": "section",
+        "text": {
+            "text": "*Task Runs*",
+            "type": "mrkdwn"
+        }
+    }
+]

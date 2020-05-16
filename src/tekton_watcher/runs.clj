@@ -84,20 +84,20 @@
 
 ;; Publishers
 
-(defn- message-topic
+(defn message-topic
   "Given a run object (either a pipelinerun or a taskrun), determines
   the topic (e.g. :pipeline-run/succeeded, :task-run/failed) that it
   belongs to."
   [run]
   (let [kind   (get run :kind)
-        reason (->> run
+        status (->> run
                     :status
                     :conditions
-                    (map :reason)
+                    (map :status)
                     first)]
-    (case reason
-      "Succeeded" (if (= kind "PipelineRun") :pipeline-run/succeeded :task-run/succeeded)
-      "Failed"    (if (= kind "PipelineRun") :pipeline-run/failed :task-run/failed))))
+    (if (= status "True")
+      (if (= kind "PipelineRun") :pipeline-run/succeeded :task-run/succeeded)
+      (if (= kind "PipelineRun") :pipeline-run/failed :task-run/failed))))
 
 (defpub watch-running-pipelineruns
   #{:pipeline-run/running}

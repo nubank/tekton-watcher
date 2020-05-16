@@ -1,13 +1,21 @@
-{:api.server/url "http://localhost:8080"
- :github.oauth-token/path "/etc/github-statuses-updater/oauth-token"
- :tekton/namespace "default"
- :tekton-watcher.server/port 9000
- :tekton.api/path "/apis/tekton.dev/v1beta1"
+{:api.server/url               "http://localhost:8080"
+ :github.oauth-token/path      "/etc/tekton-watcher/github/oauth-token"
+ :github.commits/url           "https://api.github.com/repos/{repository-owner}/{repository-name}/commits/{commit-sha}"
+ :github.repositories/html-url "https://github.com/{repository-owner}/{repository-name}"
+
+ ;; Slack related configurations
+ :slack.oauth-token/path       "/etc/tekton-watcher/slack/oauth-token"
+ :slack.templates/dir          "/etc/tekton-watcher/slack/templates"
+ :tekton/namespace             "dev"
+ :tekton-watcher.server/port   9000
+ :tekton.api/path              "/apis/tekton.dev/v1beta1"
  :tekton.api/url
  "{api.server/url}{tekton.api/path}/namespaces/{tekton/namespace}"
- :tekton.api.alpha/path "/apis/tekton.dev/v1alpha1"
+ :tekton.api.alpha/path        "/apis/tekton.dev/v1alpha1"
  :tekton.api.alpha/url
  "{api.server/url}{tekton.api.alpha/path}/namespaces/{tekton/namespace}"
  :tekton.dashboard/task-run
  "{tekton.dashboard/url}/#/namespaces/{tekton/namespace}/taskruns/{task-run}"
- :tekton.dashboard/url "http://localhost:8081"}
+ :tekton.dashboard/pipeline-run
+ "{tekton.dashboard/url}/#/namespaces/{tekton/namespace}/pipelineruns/{pipeline-run}"
+ :tekton.dashboard/url         "https://dashboard.cicd.nubank.world"}

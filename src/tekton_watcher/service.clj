@@ -7,6 +7,7 @@
             [tekton-watcher.health :as health]
             [tekton-watcher.http-server :as http-server]
             [tekton-watcher.runs :as runs]
+            [tekton-watcher.slack-notifications :as slack-notifications]
             [tekton-watcher.status-checks :as status-checks]))
 
 (def publishers
@@ -24,6 +25,8 @@
    runs/taskrun-succeeded
    runs/pipelinerun-failed
    runs/taskrun-failed
+   slack-notifications/pipeline-run-succeeded
+   slack-notifications/pipeline-run-failed
    status-checks/taskrun-started
    status-checks/taskrun-succeeded
    status-checks/taskrun-failed])
@@ -53,8 +56,15 @@
       (stop-server)
       (run! async/close! (vals channels)))))
 
+(def uncaught-exception-handler
+  "Handler for uncaught exceptions."
+  (reify Thread$UncaughtExceptionHandler
+    (uncaughtException [this  thread exception]
+      (log/error  exception :uncaught-exception :on-thread (.getName thread)))))
+
 (defn -main
   [& _]
+  (Thread/setDefaultUncaughtExceptionHandler uncaught-exception-handler)
   (log/info "Starting tekton-watcher...")
   (start)
   (.. Thread currentThread join))

@@ -29,5 +29,6 @@ vessel containerize \
        --output ${target}/tekton-watcher.tar \
        --source-path src \
        --resource-path resources \
+       --resource-path ~/.gitlibs/libs/slack-api/slack-api/d8c99d51b445cc55f7b27de0df0e2b0deb1095cc/resources \
        --extra-path build/tekton-watcher.sh:/usr/local/bin/tekton-watcher \
        --preserve-file-permissions

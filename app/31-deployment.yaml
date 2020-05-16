@@ -20,7 +20,7 @@ spec:
           ## API gateway between Kubernetes API server and tekton-watcher application
           args: ["proxy", "--port", "8080"]
         - name: tekton-watcher
-          image: alangh/tekton-watcher:0.1.56
+          image: alangh/tekton-watcher@sha256:817d38bd4fb76a841dd342b6ed816525f6eba991943946abf3f64121f124c7d2
           command: ["tekton-watcher"]
           ports:
             - containerPort: 9000

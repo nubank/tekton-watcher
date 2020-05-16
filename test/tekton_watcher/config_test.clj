@@ -22,35 +22,38 @@
     (providing [(misc/file-exists? (io/file "/etc/tekton-watcher/config.edn")) false]
                (is (nil? (config/read-file "/etc/tekton-watcher/config.edn"))))))
 
-(deftest read-github-oauth-token-test
-  (testing "reads the github oauth token"
+(deftest read-secret-test
+  (testing "reads a secret"
     (providing [(misc/file-exists? (io/file "/etc/github-statuses-updater/oauth-token")) true
                 (slurp (io/file "/etc/github-statuses-updater/oauth-token")) "token"]
                (is (= "token"
-                      (config/read-github-oauth-token "/etc/github-statuses-updater/oauth-token"))))))
+                      (config/read-secret "/etc/github-statuses-updater/oauth-token" "my token"))))))
 
 (testing "throws an exception when the secret can't be found"
   (providing [(misc/file-exists? (io/file "/etc/github-statuses-updater/oauth-token")) false]
-             (is (thrown? clojure.lang.ExceptionInfo
-                          (config/read-github-oauth-token "/etc./github-statuses-updater/oauth-token")))))
+             (is (thrown? java.io.FileNotFoundException
+                          (config/read-secret "/etc/github-statuses-updater/oauth-token" "my token")))))
 
 (deftest read-config-test
   (providing [(config/read-resource "config.edn") {:api.server/url          "http://localhost:8080"
-                                                   :github.oauth-token/path "/etc/github-statuses-updater/oauth-token"}
+                                                   :github.oauth-token/path "/etc/github-statuses-updater/oauth-token"
+                                                   :slack.oauth-token/path  "/etc/slack/oauth-token"}
               (config/read-file "/etc/tekton-watcher/config.edn") {:api.server/url   "http://localhost:9000"
                                                                    :tekton.api/path  "/apis/tekton.dev/v1alpha1"
                                                                    :tekton.api/url
                                                                    "{api.server/url}{tekton.api/path}/namespaces/{tekton/namespace}"
                                                                    :tekton/namespace "default"}
-              (config/read-github-oauth-token "/etc/github-statuses-updater/oauth-token") "token"]
+              (config/read-secret "/etc/github-statuses-updater/oauth-token" string?) "github-token"
+              (config/read-secret "/etc/slack/oauth-token" string?) "slack-token"]
              (let [config-data (config/read-config)]
 
                (testing "config data contains values from the config.edn resource file"
-                 (is (match? {:github.oauth-token/path "/etc/github-statuses-updater/oauth-token"}
+                 (is (match? {:github.oauth-token/path "/etc/github-statuses-updater/oauth-token"
+                              :slack.oauth-token/path  "/etc/slack/oauth-token"}
                              config-data)))
 
                (testing "config data contains values from the mounted config map"
-                 (is (match? {:tekton.api/path   "/apis/tekton.dev/v1alpha1"
+                 (is (match? {:tekton.api/path  "/apis/tekton.dev/v1alpha1"
                               :tekton/namespace "default"}
                              config-data)))
 
@@ -65,5 +68,9 @@
                              config-data)))
 
                (testing "config data contains the Github oauth token"
-                 (is (match? {:github/oauth-token "token"}
+                 (is (match? {:github/oauth-token "github-token"}
+                             config-data)))
+
+               (testing "config data contains the Slack oauth token"
+                 (is (match? {:slack/oauth-token "slack-token"}
                              config-data))))))

@@ -1,0 +1,2 @@
+Hey {receiver/name},
+The pipelinerun didn't succeed.

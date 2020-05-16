@@ -1,0 +1,121 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-slack-templates
+  namespace: tekton-watcher
+data:
+  pipeline-run-succeeded.txt: |
+    Hey {receiver/name} :smile:
+    The pipeline run <{pipeline-run/link}|*{[pipeline-run/data metadata name]}*> succeeded :tada:
+
+  pipeline-run-succeeded.json: |
+    [
+    {
+        "type": "section",
+        "text": {
+            "text": "Hey {receiver/name} :smile:\nThe pipeline run <{pipeline-run/link}|*{[pipeline-run/data metadata name]}*> succeeded :tada:\nYou may find further details about taskruns below.",
+            "type": "mrkdwn"
+        }
+    },
+    {
+        "type": "section",
+        "text": {
+            "text": "*Commit Details*",
+            "type": "mrkdwn"
+        }
+    },
+    {
+        "type": "section",
+        "text": {
+            "text": "*Repository:* <{[github.repository/data html-url]}|{[github.repository/data owner]}/{[github.repository/data name]}>",
+            "type": "mrkdwn"
+        }
+    },
+    {
+        "type": "section",
+        "text": {
+            "text": "*Author:* <{[github.commit/data author html_url]}|{[github.commit/data commit author name]}> (@{[slack/user name]})",
+            "type": "mrkdwn"
+        },
+        "accessory": {
+            "type": "image",
+            "image_url": "{[github.commit/data author avatar_url]}",
+            "alt_text": "Avatar of {[github.commit/data commit author name]}"
+        }
+    },
+    {
+        "type": "section",
+        "text": {
+            "text": "*Commit:* {[github.commit/data commit message]} (<{[github.commit/data html_url]}|{[github.commit/data sha]}>)",
+            "type": "mrkdwn"
+        }
+    },
+    {
+        "type": "divider"
+    },
+    {
+        "type": "section",
+        "text": {
+            "text": "*Task Runs*",
+            "type": "mrkdwn"
+        }
+    }
+    ]
+
+  pipeline-run-did-not-succeed.txt: |
+    Hey {receiver/name} :smile:
+    The pipeline run <{pipeline-run/link}|*{[pipeline-run/data metadata name]}*> didn't succeed.
+
+  pipeline-run-did-not-succeed.json: |
+    [
+      {
+          "type": "section",
+          "text": {
+              "text": "Hey {receiver/name} :smile:\nThe pipeline run <{pipeline-run/link}|*{[pipeline-run/data metadata name]}*> didn't succeed. You may find further details on what went wrong below.",
+              "type": "mrkdwn"
+          }
+      },
+      {
+          "type": "section",
+          "text": {
+              "text": "*Commit Details*",
+              "type": "mrkdwn"
+          }
+      },
+      {
+          "type": "section",
+          "text": {
+              "text": "*Repository:* <{[github.repository/data html-url]}|{[github.repository/data owner]}/{[github.repository/data name]}>",
+              "type": "mrkdwn"
+          }
+      },
+      {
+          "type": "section",
+          "text": {
+              "text": "*Author:* <{[github.commit/data author html_url]}|{[github.commit/data commit author name]}> (@{[slack/user name]})",
+              "type": "mrkdwn"
+          },
+          "accessory": {
+              "type": "image",
+              "image_url": "{[github.commit/data author avatar_url]}",
+              "alt_text": "Avatar of {[github.commit/data commit author name]}"
+          }
+      },
+      {
+          "type": "section",
+          "text": {
+              "text": "*Commit:* {[github.commit/data commit message]} (<{[github.commit/data html_url]}|{[github.commit/data sha]}>)",
+              "type": "mrkdwn"
+          }
+      },
+      {
+          "type": "divider"
+      },
+      {
+          "type": "section",
+          "text": {
+              "text": "*Task Runs*",
+              "type": "mrkdwn"
+          }
+      }
+    ]

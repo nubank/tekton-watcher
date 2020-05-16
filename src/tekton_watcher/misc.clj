@@ -42,12 +42,29 @@
   "Given a template string containing one or more placeholders between
   curly braces and a context map of arbitrary values whose keys should
   match the placeholders, returns a new string where placeholders were
-  replaced with values taken from matching keys in the context map."
+  replaced with values taken from matching keys in the context map.
+
+  Placeholders can refer either to keys in the root level of the
+  context map or to keys in nested data structures. In the former
+  case, use {key} and in the later one, {[key1 key2]}.
+
+  Example:
+
+  (render \"Hello {first-name}!\" {:first-name \"John\"})
+  => Hello John!
+
+  (render \"Hello {[user first-name]}!\" {:user {:first-name \"John\"}})
+  => Hello John!"
   [^String template context]
   {:pre [template]}
-  (string/replace template #"\{([^\}]+)\}" (fn [match]
-                                             (str (get context (keyword (last match))
-                                                       (first match))))))
+  (letfn [(parse [^String path]
+            (let [ks (edn/read-string path)]
+              (if (vector? ks)
+                (map keyword ks)
+                [(keyword ks)])))]
+    (string/replace template #"\{([^\}]+)\}" (fn [match]
+                                               (str (get-in context (parse (last match))
+                                                            (first match)))))))
 
 (defn parse-input
   "Given a spec and an arbitrary data structure as the input, tries to
