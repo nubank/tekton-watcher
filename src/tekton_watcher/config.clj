@@ -58,23 +58,30 @@
                     (misc/render % config))
                  config))
 
-(defn read-github-oauth-token
-  "Reads the Github oauth token used for updating status checks.
+(defn read-secret
+  "Reads a secret from file-path.
 
-  Throws an exception if the secret can't be found."
-  [^String file-path]
+  Throws a java.io.FileNotFoundException if the secret in question
+  doesn't exist."
+  [^String file-path ^String secret-display-name]
   (let [^File file (io/file file-path)]
     (if (misc/file-exists? file)
       (slurp file)
-      (throw (ex-info "Github oauth token not found. Did you forget to create a secret named `github-statuses-updater`?"
-                      {:path file-path})))))
+      (throw (java.io.FileNotFoundException. (format "%s not found. Did you forget to create a secret at %s?" secret-display-name file-path))))))
 
 (defn- add-github-oauth-token
-  "Given a config data, reads the Github oauth token used to make
-  requests to the statuses API and assoc's it into the config data."
+  "Given a config data, reads the Github oauth token and assoc's it into
+  the config data."
   [{:github.oauth-token/keys [path] :as config}]
   (assoc config
-         :github/oauth-token (read-github-oauth-token path)))
+         :github/oauth-token (read-secret path "Github oauth token")))
+
+(defn- add-slack-oauth-token
+  "Given a config data, reads the Slack oauth token and assoc's it into
+  the config data."
+  [{:slack.oauth-token/keys [path] :as config}]
+  (assoc config
+         :slack/oauth-token (read-secret path "Slack oauth token")))
 
 (def resource
   "Reads config data from tekton-watcher/config.edn on the classpath."
@@ -90,4 +97,5 @@
   []
   (-> (read-waterfall #'resource #'config-map)
       render-config
-      add-github-oauth-token))
+      add-github-oauth-token
+      add-slack-oauth-token))

@@ -40,7 +40,7 @@ EOF
 }
 
 create_release() {
-    hub release create $version \
+    hub release create "v${version}" \
         --message "tekton-watcher $version" \
         --attach ${cur_dir}/../target/tekton-watcher-${version}.yaml
 }
