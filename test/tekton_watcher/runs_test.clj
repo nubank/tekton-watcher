@@ -115,7 +115,7 @@
     (providing [(http-client/send-and-await #:http{:url          "{url}/{resource-kind}"
                                                    :path-params  {:url           "url"
                                                                   :resource-kind "pipelineruns"}
-                                                   :query-params {:labelSelector "tekton-watcher/running-event-fired,!tekton-watcher/completed-event-fired"}})
+                                                   :query-params {:labelSelector "!tekton-watcher/completed-event-fired"}})
                 {:items [in-progress-pipelinerun succeeded-pipelinerun failed-pipelinerun]}]
                (is (= [succeeded-pipelinerun failed-pipelinerun]
                       (runs/get-completed-pipelineruns {:tekton.api/url "url"}))))))
@@ -134,7 +134,7 @@
     (providing [(http-client/send-and-await #:http{:url          "{url}/{resource-kind}"
                                                    :path-params  {:url           "url"
                                                                   :resource-kind "taskruns"}
-                                                   :query-params {:labelSelector "tekton-watcher/running-event-fired,!tekton-watcher/completed-event-fired"}})
+                                                   :query-params {:labelSelector "!tekton-watcher/completed-event-fired"}})
                 {:items [in-progress-taskrun succeeded-taskrun failed-taskrun]}]
                (is (= [succeeded-taskrun failed-taskrun]
                       (runs/get-completed-taskruns {:tekton.api/url "url"}))))))

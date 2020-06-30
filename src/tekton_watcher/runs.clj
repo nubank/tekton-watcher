@@ -49,7 +49,7 @@
   [config]
   (list-runs config
              "pipelineruns"
-             "tekton-watcher/running-event-fired,!tekton-watcher/completed-event-fired"
+             "!tekton-watcher/completed-event-fired"
              pipelinerun-completed?))
 
 (defn get-running-taskruns
@@ -66,7 +66,7 @@
   [config]
   (list-runs config
              "taskruns"
-             "tekton-watcher/running-event-fired,!tekton-watcher/completed-event-fired"
+             "!tekton-watcher/completed-event-fired"
              taskrun-completed?))
 
 (defn- add-label
