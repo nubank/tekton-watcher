@@ -11,8 +11,8 @@
   [taskrun]
   (->> taskrun
        :status
-       :conditions
-       (every? #(not= "Running" (:reason %)))))
+       :completionTime
+       boolean))
 
 (defn pipelinerun-completed?
   "Given a pipelinerun, returns true if it is completed (all taskruns

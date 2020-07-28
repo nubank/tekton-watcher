@@ -10,7 +10,8 @@
                                {:test-pipeline-run-1-lint-mb9g5
                                 {:pipelineTaskName "lint"
                                  :status
-                                 {:conditions
+                                 {:completionTime "2019-08-12T18:22:57Z"
+                                  :conditions
                                   [{:reason "Failed"
                                     :status "False"
                                     :type   "Succeeded"}]}}
@@ -32,13 +33,15 @@
     {:test-pipeline-run-1-lint-mb9g5
      {:pipelineTaskName "lint"
       :status
-      {:conditions
+      {:completionTime "2019-08-12T18:22:57Z"
+       :conditions
        [{:reason "Succeeded"
          :status "True"
          :type   "Succeeded"}]}}
      :test-pipeline-run-1-unit-tests-r9kn5
      {:status
-      {:conditions
+      {:completionTime "2019-08-12T18:22:57Z"
+       :conditions
        [{:reason "Succeeded"
          :status "True"
          :type   "Succeeded"}]}}}}})
@@ -54,13 +57,15 @@
     {:test-pipeline-run-1-lint-mb9g5
      {:pipelineTaskName "lint"
       :status
-      {:conditions
+      {:completionTime "2019-08-12T18:22:57Z"
+       :conditions
        [{:reason "Failed"
          :status "False"
          :type   "Succeeded"}]}}
      :test-pipeline-run-1-unit-tests-r9kn5
      {:status
-      {:conditions
+      {:completionTime "2019-08-12T18:22:57Z"
+       :conditions
        [{:reason "Succeeded"
          :status "True"
          :type   "Succeeded"}]}}}}})
@@ -82,7 +87,8 @@
 (def succeeded-taskrun
   {:kind "TaskRun"
    :status
-   {:conditions
+   {:completionTime "2019-08-12T18:22:57Z"
+    :conditions
     [{:reason "Succeeded"
       :status "True"
       :type   "Succeeded"}]}})
@@ -90,7 +96,8 @@
 (def failed-taskrun
   {:kind "TaskRun"
    :status
-   {:conditions
+   {:completionTime "2019-08-12T18:22:57Z"
+    :conditions
     [{:reason "Failed"
       :status "False"
       :type   "Succeeded"}]}})
