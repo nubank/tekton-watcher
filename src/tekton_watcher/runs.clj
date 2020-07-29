@@ -20,9 +20,8 @@
   [pipelinerun]
   (->> pipelinerun
        :status
-       :taskRuns
-       vals
-       (every? taskrun-completed?)))
+       :completionTime
+       boolean))
 
 (defn- list-runs
   "List pipeline or task runs matching the supplied label selectors and
