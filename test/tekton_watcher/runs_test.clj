@@ -25,7 +25,8 @@
 (def succeeded-pipelinerun
   {:kind "PipelineRun"
    :status
-   {:conditions
+   {:completionTime "2019-08-12T18:22:57Z"
+    :conditions
     [{:reason "Succeeded"
       :status "True"
       :type   "Succeeded"}]
@@ -49,7 +50,8 @@
 (def failed-pipelinerun
   {:kind "PipelineRun"
    :status
-   {:conditions
+   {:completionTime "2019-08-12T18:22:57Z"
+    :conditions
     [{:reason "Failed"
       :status "False"
       :type   "Succeeded"}]
