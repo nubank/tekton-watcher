@@ -7,8 +7,7 @@
             [tekton-watcher.health :as health]
             [tekton-watcher.http-server :as http-server]
             [tekton-watcher.runs :as runs]
-            [tekton-watcher.slack-notifications :as slack-notifications]
-            [tekton-watcher.status-checks :as status-checks]))
+            [tekton-watcher.slack-notifications :as slack-notifications]))
 
 (def publishers
   "Publisher components."
@@ -26,10 +25,7 @@
    runs/pipelinerun-failed
    runs/taskrun-failed
    slack-notifications/pipeline-run-succeeded
-   slack-notifications/pipeline-run-failed
-   status-checks/taskrun-started
-   status-checks/taskrun-succeeded
-   status-checks/taskrun-failed])
+   slack-notifications/pipeline-run-failed])
 
 (defn start
   "Starts the tekton-watcher service.
