@@ -63,15 +63,15 @@ data:
     ]
 
   pipeline-run-did-not-succeed.txt: |
-    Hey {receiver/name} :smile:
-    The pipeline run <{pipeline-run/link}|*{[pipeline-run/data metadata name]}*> didn't succeed.
+    Hey {receiver/name}
+    The pipeline run <{pipeline-run/link}|*{[pipeline-run/data metadata name]}*> didn't succeed. :sadpanda:
 
   pipeline-run-did-not-succeed.json: |
     [
       {
           "type": "section",
           "text": {
-              "text": "Hey {receiver/name} :smile:\nThe pipeline run <{pipeline-run/link}|*{[pipeline-run/data metadata name]}*> didn't succeed. You may find further details on what went wrong below.",
+              "text": "Hey {receiver/name}\nThe pipeline run <{pipeline-run/link}|*{[pipeline-run/data metadata name]}*> didn't succeed. :sadpanda:\nYou may find further details on what went wrong below.",
               "type": "mrkdwn"
           }
       },
