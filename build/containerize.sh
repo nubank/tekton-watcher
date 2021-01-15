@@ -15,7 +15,7 @@ rm -rf $target; mkdir -p $target
 
 ## Generate the manifest of the image to be built
 vessel image --registry docker.io \
-       --repository alangh/tekton-watcher \
+       --repository tekton-watcher \
        --tag $tag \
        --base-image $cur_dir/openjdk-11.json \
        --output ${target}/tekton-watcher.json
